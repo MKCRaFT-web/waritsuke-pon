@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>割付ポンッ！ - v3.4.6 clean</title>
+  <title>割付ポンッ！ - v3.5.6 操作バー位置150版</title>
 
   <script src="https://unpkg.com/konva@9/konva.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
@@ -12,7 +12,6 @@
     :root{
       --bg:#0f1115;
       --glass:rgba(24,28,36,0.66);
-      --glass-strong:rgba(28,32,42,0.88);
       --line:rgba(255,255,255,0.08);
       --text:#ffffff;
       --muted:rgba(255,255,255,0.68);
@@ -75,15 +74,16 @@
       -webkit-backdrop-filter: blur(12px) saturate(1.1);
     }
 
+    /* top */
     #topBar{
       position: fixed;
-      top: calc(8px + var(--safe-top));
+      top: calc(6px + var(--safe-top));
       left: 10px;
       right: 10px;
       z-index: 100;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
       pointer-events: none;
     }
 
@@ -91,23 +91,23 @@
       pointer-events: auto;
       display: flex;
       align-items: center;
-      gap: 8px;
-      border-radius: 18px;
-      padding: 8px 10px;
-      min-height: 52px;
+      gap: 6px;
+      border-radius: 16px;
+      padding: 6px 8px;
+      min-height: 44px;
     }
 
     #brand{
-      font-size: 15px;
+      font-size: 13px;
       font-weight: 800;
       white-space: nowrap;
-      padding: 0 4px;
+      padding: 0 2px;
     }
 
     #stepTabs{
       flex: 1;
       display: flex;
-      gap: 6px;
+      gap: 5px;
       overflow-x: auto;
       scrollbar-width: none;
     }
@@ -118,8 +118,8 @@
       border-radius: 999px;
       background: rgba(255,255,255,0.08);
       color: rgba(255,255,255,0.78);
-      padding: 8px 12px;
-      font-size: 12px;
+      padding: 7px 10px;
+      font-size: 11px;
       font-weight: 800;
       white-space: nowrap;
     }
@@ -130,13 +130,13 @@
     }
 
     #menuBtn{
-      width: 38px;
-      height: 38px;
+      width: 34px;
+      height: 34px;
       border: 0;
-      border-radius: 12px;
+      border-radius: 11px;
       background: rgba(255,255,255,0.1);
       color: #fff;
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 900;
       flex: 0 0 auto;
     }
@@ -144,7 +144,7 @@
     #topSub{
       pointer-events: auto;
       display: flex;
-      gap: 6px;
+      gap: 5px;
       overflow-x: auto;
       scrollbar-width: none;
     }
@@ -152,133 +152,181 @@
 
     .miniChip{
       border-radius: 999px;
-      padding: 6px 10px;
+      padding: 5px 9px;
       background: rgba(255,255,255,0.08);
       color: rgba(255,255,255,0.78);
-      font-size: 11px;
+      font-size: 10px;
       white-space: nowrap;
     }
 
     #menuSheet{
       position: fixed;
-      top: calc(64px + var(--safe-top));
+      top: calc(54px + var(--safe-top));
       right: 10px;
       z-index: 120;
-      width: 220px;
+      width: 200px;
       display: none;
       flex-direction: column;
-      gap: 8px;
-      padding: 10px;
-      border-radius: 18px;
+      gap: 6px;
+      padding: 8px;
+      border-radius: 16px;
     }
 
     .menuItem{
       border: 0;
-      border-radius: 14px;
-      min-height: 42px;
+      border-radius: 12px;
+      min-height: 38px;
       text-align: left;
-      padding: 10px 12px;
+      padding: 9px 11px;
       background: rgba(255,255,255,0.08);
       color: #fff;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700;
     }
 
+    /* left hud */
     #leftDock{
       position: fixed;
-      left: 10px;
-      bottom: calc(110px + var(--safe-bottom));
+      left: 18px;
+      bottom: calc(150px + var(--safe-bottom));
       z-index: 112;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
       pointer-events: none;
-      max-width: calc(100vw - 120px);
+      max-width: calc(100vw - 36px);
+    }
+
+    #leftDock.base-mini-mode{
+      bottom: calc(150px + var(--safe-bottom));
     }
 
     #zoomHud{
       pointer-events: auto;
       display: none;
-      gap: 8px;
-      flex-wrap: wrap;
-      padding: 8px;
-      border-radius: 18px;
+      gap: 6px;
+      flex-wrap: nowrap;
+      align-items: center;
+      padding: 4px 6px;
+      border-radius: 14px;
       touch-action: none;
       width: fit-content;
-      max-width: calc(100vw - 120px);
+      max-width: calc(100vw - 36px);
+      background: rgba(20,24,32,0.38);
+      border: 1px solid rgba(255,255,255,0.06);
+      backdrop-filter: blur(10px) saturate(1.05);
+      -webkit-backdrop-filter: blur(10px) saturate(1.05);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.16);
     }
 
     #zoomHud button{
       border: 0;
-      border-radius: 14px;
-      min-width: 44px;
-      height: 44px;
-      background: rgba(255,255,255,0.12);
+      border-radius: 11px;
+      min-width: 34px;
+      height: 34px;
+      background: rgba(255,255,255,0.09);
       color: #fff;
-      font-size: 18px;
+      font-size: 14px;
       font-weight: 900;
-      padding: 0 12px;
+      padding: 0 9px;
     }
 
     #zoomHud #pointDoneBtn,
     #zoomHud #gridReEditBtn{
       width: auto;
-      font-size: 12px;
+      font-size: 10px;
+      min-width: auto;
+      padding: 0 10px;
     }
 
+    #zoomHud.base-mini{
+      padding: 4px 6px;
+      gap: 6px;
+      border-radius: 14px;
+    }
+
+    #zoomHud.base-mini button{
+      min-width: 34px;
+      height: 34px;
+      font-size: 14px;
+      padding: 0 9px;
+    }
+
+    #zoomHud.base-mini #pointDoneBtn{
+      font-size: 10px;
+      padding: 0 10px;
+    }
+
+    /* dpad */
     #dpad{
       position: fixed;
-      right: 10px;
+      right: 18px;
       left: auto;
-      bottom: calc(110px + var(--safe-bottom));
+      bottom: calc(154px + var(--safe-bottom));
       z-index: 113;
       pointer-events: auto;
       display: none;
-      padding: 8px;
-      border-radius: 20px;
+      padding: 0;
+      border-radius: 0;
       touch-action: none;
       width: fit-content;
-      max-width: calc(100vw - 120px);
+      max-width: calc(100vw - 36px);
+      background: transparent;
+      border: 0;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      box-shadow: none;
     }
 
     #dpad .pad{
-      width: 144px;
-      height: 144px;
+      width: 108px;
+      height: 108px;
       display: grid;
-      grid-template-columns: 44px 44px 44px;
-      grid-template-rows: 44px 44px 44px;
+      grid-template-columns: 32px 32px 32px;
+      grid-template-rows: 32px 32px 32px;
       gap: 6px;
       justify-content: center;
       align-content: center;
     }
 
     #dpad button{
-      border: 0;
-      border-radius: 14px;
-      background: rgba(255,255,255,0.12);
-      color: #fff;
-      font-size: 16px;
+      border: 1px solid rgba(20,20,20,0.68);
+      border-radius: 11px;
+      background: linear-gradient(180deg, rgba(232,236,242,0.92), rgba(162,171,183,0.92));
+      color: #1f2937;
+      font-size: 13px;
       font-weight: 900;
-      min-width: 44px;
-      min-height: 44px;
+      min-width: 32px;
+      min-height: 32px;
+      box-shadow:
+        0 5px 12px rgba(0,0,0,0.22),
+        inset 0 1px 0 rgba(255,255,255,0.65);
+      text-shadow: 0 1px 0 rgba(255,255,255,0.4);
     }
 
     #dpad .center{
-      font-size: 12px;
-      background: rgba(255,255,255,0.18);
+      font-size: 10px;
+      background: linear-gradient(180deg, rgba(62,70,82,0.96), rgba(34,40,49,0.96));
+      color: #fff;
+      border-color: rgba(255,255,255,0.14);
+      text-shadow: none;
+      box-shadow:
+        0 5px 12px rgba(0,0,0,0.24),
+        inset 0 1px 0 rgba(255,255,255,0.10);
     }
 
+    /* status */
     #statusBar {
       position: fixed;
       left: 10px;
       right: 10px;
-      bottom: calc(86px + var(--safe-bottom));
+      bottom: calc(74px + var(--safe-bottom));
       z-index: 80;
       background: rgba(0,0,0,0.34);
       border: 1px solid rgba(255,255,255,0.08);
       border-radius: 14px;
       color: #fff;
-      padding: 8px 10px;
+      padding: 7px 10px;
       font-size: 11px;
       display: flex;
       flex-direction: column;
@@ -289,6 +337,7 @@
     #statusLeft { white-space: nowrap; overflow:hidden; text-overflow: ellipsis; }
     #statusRight { white-space: pre-wrap; line-height: 1.25; color: rgba(255,255,255,0.82); }
 
+    /* bottom */
     #bottomBar{
       position: fixed;
       left: 10px;
@@ -297,18 +346,18 @@
       z-index: 90;
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      padding: 10px;
-      border-radius: 20px;
+      gap: 4px;
+      padding: 5px 6px;
+      border-radius: 16px;
       pointer-events: auto;
-      max-height: 37vh;
+      max-height: 16vh;
       overflow-y: auto;
       overscroll-behavior: contain;
     }
 
     #baseSummaryBar{
       display:none;
-      border-radius: 14px;
+      border-radius: 12px;
       padding: 0;
       overflow: hidden;
       flex: 0 0 auto;
@@ -319,12 +368,12 @@
       border: 0;
       background: transparent;
       color: #fff;
-      padding: 12px 14px;
+      padding: 8px 10px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 10px;
-      font-size: 12px;
+      font-size: 10px;
       font-weight: 800;
     }
 
@@ -343,50 +392,50 @@
     #bottomInfo{
       display: none;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
+      gap: 5px;
       flex: 0 0 auto;
     }
 
     .infoMini{
       background: rgba(255,255,255,0.06);
-      border-radius: 14px;
-      padding: 8px 10px;
-      min-height: 58px;
+      border-radius: 11px;
+      padding: 6px 8px;
+      min-height: 46px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
     }
 
     .infoMiniLabel{
-      font-size: 10px;
+      font-size: 8px;
       color: var(--muted);
       font-weight: 700;
     }
 
     .infoMiniValue{
-      font-size: 14px;
+      font-size: 12px;
       font-weight: 800;
       color: #fff;
-      line-height: 1.15;
+      line-height: 1.1;
     }
 
     .infoMiniSub{
-      font-size: 10px;
+      font-size: 8px;
       color: rgba(255,255,255,0.72);
       font-weight: 700;
-      line-height: 1.2;
-      margin-top: 4px;
+      line-height: 1.15;
+      margin-top: 2px;
     }
 
     #bottomActions{
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 4px;
       flex: 0 0 auto;
     }
 
     #currentSectionLabel{
-      font-size: 11px;
+      font-size: 9px;
       color: var(--muted);
       font-weight: 700;
       padding-left: 2px;
@@ -395,15 +444,15 @@
     .sectionCompact{
       display: none;
       flex-direction: column;
-      gap: 8px;
+      gap: 4px;
     }
 
     .btn{
       border: 0;
-      border-radius: 14px;
-      min-height: 42px;
-      padding: 10px 12px;
-      font-size: 13px;
+      border-radius: 10px;
+      min-height: 28px;
+      padding: 5px 9px;
+      font-size: 10px;
       font-weight: 800;
       width: 100%;
       color: #fff;
@@ -416,25 +465,27 @@
     .btn-green { background: linear-gradient(180deg, #22c55e, #16a34a); }
     .btn-orange { background: linear-gradient(180deg, #f59e0b, #ea580c); }
     .btn-red { background: linear-gradient(180deg, #ef4444, #dc2626); }
-    .btn-dark { background: rgba(255,255,255,0.12); }
-    .btn-black { background: rgba(255,255,255,0.12); }
-    .btn-gray { background: rgba(255,255,255,0.12); }
+    .btn-dark, .btn-black, .btn-gray { background: rgba(255,255,255,0.12); }
 
     .actionGrid2{
-      display: grid;
+      display:grid;
       grid-template-columns: 1fr 1fr;
-      gap: 8px;
+      gap:5px;
     }
 
-    .row { display:flex; gap:6px; align-items:center; }
+    .row{
+      display:flex;
+      gap:5px;
+      align-items:center;
+    }
 
     input {
       width: 100%;
-      padding: 10px 8px;
-      border-radius: 12px;
+      padding: 5px 8px;
+      border-radius: 9px;
       border: 1px solid rgba(255,255,255,0.12);
-      font-size: 16px;
-      min-height: 42px;
+      font-size: 13px;
+      min-height: 30px;
       background: rgba(255,255,255,0.08);
       color: #fff;
       -webkit-user-select: text;
@@ -443,10 +494,10 @@
     }
 
     label {
-      font-size: 11px;
+      font-size: 9px;
       font-weight: bold;
       display:block;
-      margin-top:2px;
+      margin-top:0;
       color: var(--muted);
     }
 
@@ -460,21 +511,9 @@
     }
 
     @media (max-width: 430px){
-      #bottomBar{
-        max-height: 35vh;
-      }
-      .infoMini{
-        min-height: 54px;
-      }
-      .infoMiniValue{
-        font-size: 13px;
-      }
-      #zoomHud{
-        max-width: calc(100vw - 130px);
-      }
-      #dpad{
-        max-width: calc(100vw - 130px);
-      }
+      #bottomBar{ max-height: 17vh; }
+      #zoomHud, #dpad{ max-width: calc(100vw - 36px); }
+      .infoMiniValue{ font-size: 11px; }
     }
   </style>
 </head>
@@ -519,7 +558,7 @@
     </div>
   </div>
 
-  <div id="dpad" class="glass" aria-label="微調整">
+  <div id="dpad" aria-label="微調整">
     <div class="pad">
       <div></div><button id="dUp">▲</button><div></div>
       <button id="dLeft">◀</button><button id="dCenter" class="center">5mm</button><button id="dRight">▶</button>
@@ -533,7 +572,7 @@
   </div>
 
   <div id="bottomBar" class="glass">
-    <div id="baseSummaryBar" class="glassMini" style="display:none;">
+    <div id="baseSummaryBar" class="glassMini">
       <button id="baseSummaryToggle" type="button">
         <span id="baseSummaryText">基準点寸法: -</span>
         <span id="baseSummaryArrow">▼</span>
@@ -715,6 +754,7 @@ let baseInfoExpanded = false;
 const statusLeft = document.getElementById("statusLeft");
 const statusRight = document.getElementById("statusRight");
 const zoomHud = document.getElementById("zoomHud");
+const leftDock = document.getElementById("leftDock");
 
 const baseSummaryBar = document.getElementById("baseSummaryBar");
 const baseSummaryToggle = document.getElementById("baseSummaryToggle");
@@ -1102,15 +1142,60 @@ function restoreAllPointInteractivity() {
   uiLayer.draw();
 }
 
+function clearBaseMiniHud() {
+  zoomHud.classList.remove("base-mini");
+  leftDock.classList.remove("base-mini-mode");
+}
+
+function showBaseMiniHud() {
+  zoomHudMode = "base";
+  zoomHud.classList.add("base-mini");
+  leftDock.classList.add("base-mini-mode");
+  zoomHud.style.display = "flex";
+  zoomHud.style.flexWrap = "nowrap";
+
+  document.getElementById("zoomInBtn").style.display = "inline-block";
+  document.getElementById("zoomOutBtn").style.display = "inline-block";
+  document.getElementById("zoomResetBtn").style.display = "inline-block";
+
+  const pointDoneBtn = document.getElementById("pointDoneBtn");
+  pointDoneBtn.style.display = "inline-block";
+  pointDoneBtn.textContent = "調整完了";
+
+  document.getElementById("gridReEditBtn").style.display = "none";
+}
+
 function showZoomHud(modeName) {
+  clearBaseMiniHud();
   zoomHudMode = modeName;
   zoomHud.style.display = "flex";
-  document.getElementById("gridReEditBtn").style.display = (modeName === "grid") ? "inline-block" : "none";
-  document.getElementById("pointDoneBtn").style.display = (modeName === "point") ? "inline-block" : "none";
+  zoomHud.style.flexWrap = "nowrap";
+
+  const pointDoneBtn = document.getElementById("pointDoneBtn");
+  const gridReEditBtn = document.getElementById("gridReEditBtn");
+
+  document.getElementById("zoomInBtn").style.display = "inline-block";
+  document.getElementById("zoomOutBtn").style.display = "inline-block";
+  document.getElementById("zoomResetBtn").style.display = "inline-block";
+
+  if (modeName === "grid") {
+    pointDoneBtn.style.display = "none";
+    pointDoneBtn.textContent = "点調整完了";
+    gridReEditBtn.style.display = "inline-block";
+  } else if (modeName === "point") {
+    pointDoneBtn.style.display = "inline-block";
+    pointDoneBtn.textContent = "点調整完了";
+    gridReEditBtn.style.display = "none";
+  } else {
+    pointDoneBtn.style.display = "none";
+    pointDoneBtn.textContent = "点調整完了";
+    gridReEditBtn.style.display = "none";
+  }
 }
 
 function hideZoomHud() {
   zoomHudMode = "hidden";
+  clearBaseMiniHud();
   zoomHud.style.display = "none";
 }
 
@@ -1174,9 +1259,7 @@ function createPoint(pos, color, dotName, { snapOnCreate = false, snapOnDragEnd 
     dragDistance: DRAG_THRESHOLD_PX
   });
 
-  g.dragBoundFunc((rawPos) => {
-    return applySmartSnap(g, rawPos, dotName);
-  });
+  g.dragBoundFunc((rawPos) => applySmartSnap(g, rawPos, dotName));
 
   g.add(new Konva.Circle({
     radius: HIT_RADIUS,
@@ -1271,10 +1354,7 @@ function createPoint(pos, color, dotName, { snapOnCreate = false, snapOnDragEnd 
     if (snapOnDragEnd) {
       g.position(snapToGrid({ x: g.x(), y: g.y() }));
     } else {
-      g.position({
-        x: roundToUnit(g.x()),
-        y: roundToUnit(g.y())
-      });
+      g.position({ x: roundToUnit(g.x()), y: roundToUnit(g.y()) });
     }
 
     if (dotName === "polyDot") syncPoly();
@@ -1369,10 +1449,7 @@ function updateBaseDimsToPoly() {
     return;
   }
 
-  const bx = base.x();
-  const by = base.y();
-  const eps = BASE_INTERSECT_EPS;
-
+  const bx = base.x(), by = base.y(), eps = BASE_INTERSECT_EPS;
   const xs = [
     ...intersectionsWithHorizontalLine(poly, by + eps),
     ...intersectionsWithHorizontalLine(poly, by - eps)
@@ -1383,14 +1460,8 @@ function updateBaseDimsToPoly() {
   ];
 
   const uniq = (arr) => Array.from(new Set(arr.map(v => Math.round(v * 1000) / 1000))).sort((a,b)=>a-b);
-  const xsU = uniq(xs);
-  const ysU = uniq(ys);
-
-  const leftX = maxLessThan(xsU, bx);
-  const rightX = minGreaterThan(xsU, bx);
-  const upY = maxLessThan(ysU, by);
-  const downY = minGreaterThan(ysU, by);
-
+  const xsU = uniq(xs), ysU = uniq(ys);
+  const leftX = maxLessThan(xsU, bx), rightX = minGreaterThan(xsU, bx), upY = maxLessThan(ysU, by), downY = minGreaterThan(ysU, by);
   const dxL = (leftX == null) ? null : (bx - leftX);
   const dxR = (rightX == null) ? null : (rightX - bx);
   const dyU = (upY == null) ? null : (by - upY);
@@ -1422,8 +1493,7 @@ function updateBaseDimsToPoly() {
   baseYUtileOut.textContent = fmtTile(yUmm, thMm);
   baseYDtileOut.textContent = fmtTile(yDmm, thMm);
 
-  baseSummaryText.textContent =
-    `X左 ${fmtMm(xLmm)} / X右 ${fmtMm(xRmm)} / Y上 ${fmtMm(yUmm)} / Y下 ${fmtMm(yDmm)}`;
+  baseSummaryText.textContent = `X左 ${fmtMm(xLmm)} / X右 ${fmtMm(xRmm)} / Y上 ${fmtMm(yUmm)} / Y下 ${fmtMm(yDmm)}`;
 
   const fmt2 = (v, tile) => {
     if (v == null || !isFinite(v) || !isFinite(tile) || tile <= 0) return "-";
@@ -1432,11 +1502,7 @@ function updateBaseDimsToPoly() {
     return `${v.toFixed(1)}mm （${n}枚 + ${rem.toFixed(1)}mm）`;
   };
 
-  setStatus(
-    null,
-    `X左: ${fmt2(xLmm, twMm)}\nX右: ${fmt2(xRmm, twMm)}\nY上: ${fmt2(yUmm, thMm)}\nY下: ${fmt2(yDmm, thMm)}`
-  );
-
+  setStatus(null, `X左: ${fmt2(xLmm, twMm)}\nX右: ${fmt2(xRmm, twMm)}\nY上: ${fmt2(yUmm, thMm)}\nY下: ${fmt2(yDmm, thMm)}`);
   setBaseInfoVisible(true);
 }
 
@@ -1655,17 +1721,10 @@ function moveActivePointByScreenPx(dxPx, dyPx) {
   let nextPos;
 
   if (activePoint.hasName("polyDot")) {
-    nextPos = {
-      x: roundToUnit(activePoint.x() + dx),
-      y: roundToUnit(activePoint.y() + dy)
-    };
+    nextPos = { x: roundToUnit(activePoint.x() + dx), y: roundToUnit(activePoint.y() + dy) };
     lastSnapInfo = "";
   } else {
-    nextPos = applySmartSnap(
-      activePoint,
-      { x: activePoint.x() + dx, y: activePoint.y() + dy },
-      activePoint.name()
-    );
+    nextPos = applySmartSnap(activePoint, { x: activePoint.x() + dx, y: activePoint.y() + dy }, activePoint.name());
   }
 
   activePoint.position(nextPos);
@@ -1922,8 +1981,8 @@ document.getElementById("fileInput").onchange = async (e) => {
 function setupImage(source) {
   bgImage.image(source);
 
-  const topReserve = 170;
-  const bottomReserve = 250;
+  const topReserve = 132;
+  const bottomReserve = 176;
 
   const usableW = stage.width();
   const usableH = Math.max(120, stage.height() - topReserve - bottomReserve);
@@ -1934,7 +1993,7 @@ function setupImage(source) {
   const fittedH = source.height * sc;
 
   const offsetX = (stage.width() - fittedW) / 2;
-  const offsetY = topReserve + (usableH - fittedH) / 2 - 14;
+  const offsetY = topReserve + (usableH - fittedH) / 2 - 4;
 
   photoGroup.scale({ x: sc, y: sc });
   photoGroup.position({ x: offsetX, y: offsetY });
@@ -1997,9 +2056,10 @@ document.getElementById("alignBtn").onclick = () => {
   lockPhoto(false);
   document.getElementById("alignInputArea").style.display = "block";
   showZoomHud("point");
+  dpadMode = "point";
+  setDpadVisible(true);
   stage.draggable(false);
   resetStageView();
-  setDpadVisible(false);
 };
 
 document.getElementById("applyAlignBtn").onclick = () => {
@@ -2045,9 +2105,10 @@ document.getElementById("measureBtn").onclick = () => {
   lockPhoto(false);
   document.getElementById("measureInputArea").style.display = "block";
   showZoomHud("point");
+  dpadMode = "point";
+  setDpadVisible(true);
   stage.draggable(false);
   resetStageView();
-  setDpadVisible(false);
 };
 
 document.getElementById("applyScaleBtn").onclick = () => {
@@ -2093,9 +2154,10 @@ document.getElementById("polyBtn").onclick = () => {
   document.getElementById("polyEditDoneBtn").style.display = "none";
   document.getElementById("polyEditBtn").style.display = "block";
   showZoomHud("point");
+  dpadMode = "point";
+  setDpadVisible(true);
   stage.draggable(false);
   resetStageView();
-  setDpadVisible(false);
   mainLayer.draw();
   uiLayer.draw();
 };
@@ -2139,9 +2201,10 @@ document.getElementById("polyEditBtn").onclick = () => {
   setPolyDotsDraggable(true);
   restoreAllPointInteractivity();
   showZoomHud("point");
+  dpadMode = "point";
+  setDpadVisible(true);
   stage.draggable(false);
   resetStageView();
-  setDpadVisible(false);
   document.getElementById("polyEditBtn").style.display = "none";
   document.getElementById("polyEditDoneBtn").style.display = "block";
   setStatus("範囲調整中：点ドラッグ → 調整完了でロック", null);
@@ -2204,17 +2267,31 @@ document.getElementById("confirmGridBtn").onclick = () => {
   mainLayer.draw();
 };
 
-document.getElementById("optBtn").onclick = () => { optimizeGrid(); };
+document.getElementById("optBtn").onclick = () => optimizeGrid();
 document.getElementById("zoomInBtn").onclick = () => zoomAroundCenter(1.2);
 document.getElementById("zoomOutBtn").onclick = () => zoomAroundCenter(1 / 1.2);
 document.getElementById("zoomResetBtn").onclick = () => resetStageView();
 
 document.getElementById("pointDoneBtn").onclick = () => {
+  if (zoomHud.classList.contains("base-mini")) {
+    zoomLayer.visible(false);
+    hideZoomHud();
+    setDpadVisible(false);
+    activePoint = null;
+    stage.draggable(false);
+    resetStageView();
+    setStatus("基準点調整完了", null);
+    return;
+  }
+
   exitPointAdjust();
-  if (mode !== "idle") showZoomHud("point");
+  if (mode !== "idle") {
+    showZoomHud("point");
+    dpadMode = "point";
+    setDpadVisible(true);
+  }
   stage.draggable(false);
   zoomLayer.visible(false);
-  setDpadVisible(false);
 };
 
 document.getElementById("gridReEditBtn").onclick = () => {
@@ -2244,13 +2321,14 @@ document.getElementById("tileHeightInput").addEventListener("change", () => { if
 document.getElementById("basePointBtn").onclick = () => {
   if (!gridGroup.visible()) { alert("先にグリッドを生成してください。"); return; }
   if (polyShape.points().length < 6) { alert("先に施工範囲（ポリゴン）を完了してください。"); return; }
+
   setMode("settingBase");
   lockPhoto(true);
-  showZoomHud("point");
   stage.draggable(false);
   resetStageView();
   setDpadVisible(false);
   setStatus("基準点をタップ（交点スナップ）→ 下に寸法要約が出ます", null);
+  showBaseMiniHud();
 };
 
 function getPointerPos(e){
@@ -2262,16 +2340,32 @@ function getPointerPos(e){
   return { x: (p.x - stage.x()) / sx, y: (p.y - stage.y()) / sy };
 }
 
+function isGridTargetNode(target){
+  if (!target) return false;
+  if (target === gridGroup) return true;
+  if (typeof target.getParent === "function") {
+    let p = target;
+    while (p) {
+      if (p === gridGroup) return true;
+      p = p.getParent ? p.getParent() : null;
+    }
+  }
+  return false;
+}
+
 stage.on("pointerdown", (e) => {
   if (mode === "idle") return;
   if (pointDragging) return;
-
   if (zoomHudMode === "point" && activePoint) return;
 
   const layer = e.target && e.target.getLayer && e.target.getLayer();
   if (layer === uiLayer || layer === zoomLayer) return;
 
-  const isBackgroundTarget = (e.target === bgImage || e.target === stage || e.target === gridGroup);
+  const isBackgroundTarget =
+    e.target === bgImage ||
+    e.target === stage ||
+    isGridTargetNode(e.target);
+
   if (!isBackgroundTarget) return;
 
   const pos = getPointerPos(e);
@@ -2306,19 +2400,20 @@ stage.on("pointerdown", (e) => {
     uiLayer.draw();
   } else if (mode === "settingBase") {
     destroyDots("baseDot");
-    createPoint(pos, "#00bfff", "baseDot", { snapOnCreate: true, snapOnDragEnd: true });
+    const snappedPos = snapToGrid(pos);
+    createPoint(snappedPos, "#00bfff", "baseDot", { snapOnCreate: false, snapOnDragEnd: true });
     armTapSuppression();
     baseInfoExpanded = false;
+    activePoint = null;
     setMode("idle");
     uiLayer.draw();
     updateBaseDimsToPoly();
     setStatus("基準点 設置完了（要約表示）", null);
-    activePoint = null;
     zoomLayer.visible(false);
-    hideZoomHud();
     setDpadVisible(false);
     stage.draggable(false);
     resetStageView();
+    showBaseMiniHud();
   }
 });
 
@@ -2398,9 +2493,7 @@ function setActiveSection(name){
 }
 
 stepTabs.forEach(btn => {
-  btn.addEventListener("click", () => {
-    setActiveSection(btn.dataset.step);
-  });
+  btn.addEventListener("click", () => setActiveSection(btn.dataset.step));
 });
 
 menuBtn.addEventListener("click", (e) => {
