@@ -2,1397 +2,206 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>割付ポンッ！ - 完全版（積算追加）</title>
-
-  <script src="https://unpkg.com/konva@9/konva.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>割付ポンっ | ポータル</title>
   <style>
-    * { -webkit-tap-highlight-color: transparent; outline: none; box-sizing: border-box; }
-    body { margin: 0; padding: 0; overflow: hidden; background: #1a1a1a; font-family: sans-serif; touch-action: none; }
-    #container{ position: fixed; inset: 0; width: 100vw; height: 100vh; }
-
-    #controls{
-      position: absolute; top: 10px; left: 10px; z-index: 100;
-      background: rgba(255,255,255,0.95); border-radius: 12px; width: 270px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-      max-height: 72vh; display: flex; flex-direction: column; overflow: hidden;
-      transition: transform 0.25s ease;
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
     }
-    #controls.minimized{ transform: translateX(-255px); }
 
-    #controlsHeader{ position: relative; padding: 10px; border-bottom: 1px solid rgba(0,0,0,0.08); }
-    #controlsBody{ padding: 10px; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
-
-    #toggleBtn{
-      position: absolute; right: -26px; top: 10px;
-      width: 56px; height: 56px;
-      background: #007bff; color: white;
-      border-radius: 14px; border: 3px solid white;
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 900; cursor: pointer; user-select: none;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+    html, body {
+      margin: 0;
+      padding: 0;
     }
-    #toggleBtn:active { transform: scale(0.98); }
 
-    .section { background: #f0f2f5; padding: 8px; border-radius: 8px; margin-bottom: 6px; border-left: 4px solid #007bff; }
-    .btn { background: #007bff; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; width: 100%; margin: 3px 0; font-weight: bold; font-size: 12px; }
-    .btn-purple { background: #6f42c1; } .btn-green { background: #28a745; } .btn-orange { background: #fd7e14; } .btn-red { background: #dc3545; }
-    .btn-dark { background:#333; } .btn-black { background:#000; } .btn-gray { background:#6c757d; }
-    .row { display:flex; gap:6px; align-items:center; }
-    input { width: 100%; padding: 6px; border-radius: 4px; border: 1px solid #ccc; font-size: 14px; margin: 4px 0; }
-    label { font-size: 11px; font-weight: bold; display:block; margin-top:4px; }
-    .hint { font-size: 11px; color:#333; margin-top:4px; line-height: 1.35; }
-
-    .kv { display:flex; justify-content: space-between; gap:10px; font-size: 12px; margin-top: 6px; }
-    .pill { background:#fff; border:1px solid rgba(0,0,0,0.12); border-radius: 999px; padding: 3px 8px; font-weight: 700; }
-
-    #statusBar {
-      position: absolute; left: 0; right: 0; bottom: 0; z-index: 90;
-      background: rgba(0,0,0,0.65); color: #fff;
-      padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
-      font-size: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(0,123,255,0.10), transparent 28%),
+        linear-gradient(180deg, #1f1f1f 0%, #111111 100%);
+      color: #ffffff;
+      min-height: 100vh;
+      padding:
+        max(20px, env(safe-area-inset-top))
+        16px
+        calc(28px + env(safe-area-inset-bottom));
     }
-    #statusLeft { white-space: nowrap; overflow:hidden; text-overflow: ellipsis; }
-    #statusRight { white-space: pre-wrap; line-height: 1.25; }
 
-    /* ---- D-pad overlay ---- */
-    #dpad {
-      position: fixed;
-      right: 12px;
-      bottom: calc(12px + env(safe-area-inset-bottom));
-      z-index: 120;
-      display: none;
-      opacity: 0.88;
-      user-select: none;
-      -webkit-user-select: none;
-      touch-action: none;
+    .wrap {
+      width: 100%;
+      max-width: 720px;
+      margin: 0 auto;
     }
-    #dpad .pad {
-      width: 148px;
-      height: 148px;
-      display: grid;
-      grid-template-columns: 48px 48px 48px;
-      grid-template-rows: 48px 48px 48px;
-      gap: 2px;
-      background: rgba(0,0,0,0.25);
-      border-radius: 18px;
-      padding: 6px;
-      backdrop-filter: blur(6px);
+
+    .hero {
+      text-align: center;
+      padding: 30px 18px 18px;
     }
-    #dpad button {
-      border: 0;
-      border-radius: 12px;
-      background: rgba(255,255,255,0.92);
+
+    .logo {
+      font-size: 36px;
       font-weight: 900;
-      font-size: 18px;
+      letter-spacing: 0.03em;
+      line-height: 1.15;
+      margin-bottom: 10px;
     }
-    #dpad button:active { transform: scale(0.98); }
-    #dpad .center {
-      background: rgba(255,255,255,0.60);
-      font-size: 12px;
+
+    .hero-title {
+      font-size: 18px;
       font-weight: 800;
+      color: rgba(255, 255, 255, 0.96);
+      margin-bottom: 10px;
+      line-height: 1.45;
+    }
+
+    .sub {
+      font-size: 14px;
+      line-height: 1.7;
+      color: rgba(255, 255, 255, 0.82);
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 22px;
+      padding: 18px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+    }
+
+    .grid {
+      display: grid;
+      gap: 14px;
+      margin-top: 4px;
+    }
+
+    .card {
+      position: relative;
+      display: block;
+      text-decoration: none;
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      border-radius: 18px;
+      padding: 18px 52px 18px 16px;
+      transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+      overflow: hidden;
+    }
+
+    .card:active {
+      transform: scale(0.985);
+      background: rgba(255, 255, 255, 0.11);
+    }
+
+    .card::after {
+      content: "›";
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 28px;
+      line-height: 1;
+      color: rgba(255, 255, 255, 0.45);
+      font-weight: 500;
+    }
+
+    .card-title {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 6px;
+      line-height: 1.35;
+    }
+
+    .card-desc {
+      font-size: 13px;
+      line-height: 1.7;
+      color: rgba(255, 255, 255, 0.82);
+    }
+
+    .stable {
+      border-left: 6px solid #28a745;
+    }
+
+    .beta {
+      border-left: 6px solid #fd7e14;
+    }
+
+    .manual {
+      border-left: 6px solid #007bff;
+    }
+
+    .note {
+      margin-top: 18px;
+      font-size: 12px;
+      line-height: 1.7;
+      text-align: center;
+      color: rgba(255, 255, 255, 0.68);
+    }
+
+    .footer {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    @media (min-width: 700px) {
+      .grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .manual-wide {
+        grid-column: 1 / -1;
+      }
     }
   </style>
 </head>
-
 <body>
-  <div id="controls">
-    <div id="controlsHeader">
-      <div id="toggleBtn" aria-label="メニューを開閉">⇔</div>
-      <input type="file" id="fileInput" accept="image/*,.pdf" />
+  <div class="wrap">
+    <div class="hero">
+      <div class="logo">割付ポンっ</div>
+      <div class="hero-title">安定版・Beta版・マニュアル</div>
+      <div class="sub">
+        用途に合わせて選んでください。
+      </div>
     </div>
 
-    <div id="controlsBody">
-      <div class="section">
-        <button class="btn btn-dark" id="lockBtn">図面ロック：OFF</button>
-        <div class="hint">※グリッド表示後は基本ロック推奨</div>
+    <div class="panel">
+      <div class="grid">
+        <a class="card stable" href="./stable/index.html">
+          <div class="card-title">安定版</div>
+          <div class="card-desc">
+            普段使い向け。動作確認済みの安定したバージョンを開きます。
+          </div>
+        </a>
+
+        <a class="card beta" href="./beta/index.html">
+          <div class="card-title">Beta版</div>
+          <div class="card-desc">
+            新機能や調整中の内容を試す版です。挙動確認やテスト用にどうぞ。
+          </div>
+        </a>
+
+        <a class="card manual manual-wide" href="./manual/index.html">
+          <div class="card-title">使い方マニュアル</div>
+          <div class="card-desc">
+            基本操作、水平合わせ、縮尺合わせ、施工範囲指定、グリッド生成、
+            基準点、保存方法などをまとめたマニュアルです。
+          </div>
+        </a>
       </div>
 
-      <div class="section">
-        <button class="btn btn-purple" id="alignBtn">0. 水平合わせ</button>
-        <div id="alignInputArea" style="display:none;">
-          <button class="btn btn-green" id="applyAlignBtn">確定</button>
-        </div>
+      <div class="note">
+        ※ Beta版は調整中のため、安定版と挙動が異なる場合があります。
       </div>
+    </div>
 
-      <div class="section">
-        <button class="btn" id="measureBtn">1. 縮尺合わせ</button>
-        <div id="measureInputArea" style="display:none;">
-          <label>実寸(mm)</label>
-          <input type="number" id="realDistInput" value="1000" />
-          <button class="btn btn-green" id="applyScaleBtn">確定</button>
-        </div>
-      </div>
-
-      <div class="section">
-        <button class="btn btn-orange" id="polyBtn">2. 施工範囲指定</button>
-
-        <div id="polyControls" style="display:none;">
-          <button class="btn btn-red" id="undoBtn">戻す</button>
-          <button class="btn btn-green" id="closePolyBtn">完了（範囲ロック）</button>
-        </div>
-
-        <button class="btn btn-gray" id="polyEditBtn">✏️ 範囲調整（点を動かす）</button>
-        <button class="btn btn-green" id="polyEditDoneBtn" style="display:none;">✅ 調整完了（ロック）</button>
-
-        <div class="hint">
-          ・完了後は点が動かない（誤操作防止）<br>
-          ・直したい時だけ「範囲調整」
-        </div>
-      </div>
-
-      <div class="section">
-        <label>タイル(mm)</label>
-        <div class="row">
-          <input type="number" id="tileWidthInput" value="300" />
-          <input type="number" id="tileHeightInput" value="300" />
-        </div>
-        <button class="btn btn-green" id="showGridBtn">3. グリッド生成（表示）</button>
-        <button class="btn btn-dark" id="confirmGridBtn">4. グリッド確定（固定）</button>
-
-        <button class="btn btn-purple" id="optBtn">🎯 最適割付（危険小片最小）</button>
-        <div class="hint">※グリッド表示後に実行。重い時はタイル寸法を見直し。</div>
-
-        <div class="hint">※グリッド生成後は「グリッドのみ」ドラッグ</div>
-      </div>
-
-      <div class="section">
-        <label>危険小片表示</label>
-        <button class="btn btn-red" id="dangerToggleBtn">危険小片：ON</button>
-        <label>危険小片(mm) しきい値</label>
-        <input type="number" id="dangerMmInput" value="30" />
-        <div class="hint">※欠けタイルの「最小幅/最小高さ（近似）」がこの値未満なら赤</div>
-      </div>
-
-      <div class="section">
-        <label>積算</label>
-        <label>ロス率(%)</label>
-        <input type="number" id="wastePctInput" value="5" />
-        <div class="kv"><div>施工面積</div><div class="pill" id="areaOut">- ㎡</div></div>
-        <div class="kv"><div>必要枚数(理論)</div><div class="pill" id="needTilesOut">- 枚</div></div>
-        <div class="kv"><div>発注枚数(ロス込)</div><div class="pill" id="orderTilesOut">- 枚</div></div>
-        <div class="hint">※簡易積算：施工面積÷タイル面積×(1+ロス率)</div>
-      </div>
-
-      <div class="section">
-        <button class="btn btn-dark" id="basePointBtn">5. 基準点（交点スナップ）</button>
-        <div class="hint">
-          ✅ 下の表示は<br>
-          X(左/右)：基準点の水平線と範囲境界の交点まで<br>
-          Y(上/下)：基準点の垂直線と範囲境界の交点まで
-        </div>
-      </div>
-
-      <button class="btn btn-black" id="saveImageBtn">📸 保存</button>
+    <div class="footer">
+      MKCRaFT
     </div>
   </div>
-
-  <div id="container"></div>
-
-  <div id="dpad" aria-label="グリッド微調整">
-    <div class="pad">
-      <div></div>
-      <button id="dUp">▲</button>
-      <div></div>
-
-      <button id="dLeft">◀</button>
-      <button id="dCenter" class="center">5mm</button>
-      <button id="dRight">▶</button>
-
-      <div></div>
-      <button id="dDown">▼</button>
-      <div></div>
-    </div>
-  </div>
-
-  <div id="statusBar">
-    <div id="statusLeft">図面を読み込んで開始</div>
-    <div id="statusRight">X(左/右): - / -
-Y(上/下): - / -</div>
-  </div>
-
-  <script>
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js";
-
-    // ========= チューニング =========
-    // 面積を増やす：余白タイル数を固定（大きいほど広く取るが重くなる）
-    const GRID_MARGIN_TILES = 6;
-    // セル上限（端末次第：大きいほど重い）
-    const GRID_MAX_CELLS = 80000;
-    // 基準点の頂点ピタ対策（stage座標）
-    const BASE_INTERSECT_EPS = 0.5;
-
-    // ========= Konva setup =========
-    const stage = new Konva.Stage({ container: "container", width: window.innerWidth, height: window.innerHeight });
-    const mainLayer = new Konva.Layer();
-    const uiLayer = new Konva.Layer();
-    const zoomLayer = new Konva.Layer({ visible: false });
-
-    const photoGroup = new Konva.Group({ draggable: true });
-    const bgImage = new Konva.Image({ listening: true });
-
-    const gridGroup = new Konva.Group({ draggable: false, visible: false });
-
-    const polyShape = new Konva.Line({
-      stroke: "#fd7e14", strokeWidth: 2, fill: "rgba(253, 126, 20, 0.2)",
-      closed: true, points: [], listening: false,
-    });
-
-    const alignLine = new Konva.Line({ stroke: "#6f42c1", strokeWidth: 2, dash: [5, 5], visible: false, listening: false });
-    const scaleLine = new Konva.Line({ stroke: "red", strokeWidth: 2, dash: [4, 4], visible: false, listening: false });
-
-    // zoom magnifier
-    const zoomGroup = new Konva.Group();
-    const zoomContent = new Konva.Image();
-    zoomGroup.add(new Konva.Circle({ radius: 85, stroke: "#fff", strokeWidth: 3, fill: "#000" }), zoomContent);
-    zoomGroup.add(
-      new Konva.Line({ points: [-20, 0, 20, 0], stroke: "#0f0", strokeWidth: 2 }),
-      new Konva.Line({ points: [0, -20, 0, 20], stroke: "#0f0", strokeWidth: 2 })
-    );
-    zoomLayer.add(zoomGroup);
-
-    photoGroup.add(bgImage);
-    mainLayer.add(photoGroup, gridGroup);
-    uiLayer.add(polyShape, alignLine, scaleLine);
-    stage.add(mainLayer, uiLayer, zoomLayer);
-
-    // ========= State =========
-    let mode = "idle"; // idle / aligning / measuring / drawing / polyAdjust / gridAdjust / settingBase
-    let mmPerLocalPx = 0;
-    let photoLocked = false;
-    let dangerOn = true;
-
-    let lastTileStageW = 0;
-    let lastTileStageH = 0;
-
-    const statusLeft = document.getElementById("statusLeft");
-    const statusRight = document.getElementById("statusRight");
-    const areaOut = document.getElementById("areaOut");
-    const needTilesOut = document.getElementById("needTilesOut");
-    const orderTilesOut = document.getElementById("orderTilesOut");
-
-    function setStatus(left, right) {
-      if (left != null) statusLeft.textContent = left;
-      if (right != null) statusRight.textContent = right;
-    }
-
-    function lockPhoto(lock) {
-      photoLocked = !!lock;
-      photoGroup.draggable(!photoLocked);
-      bgImage.listening(!photoLocked);
-      document.getElementById("lockBtn").textContent = "図面ロック：" + (photoLocked ? "ON" : "OFF");
-    }
-
-    function setMode(next) {
-      mode = next;
-      const label = {
-        idle: "待機",
-        aligning: "水平合わせ（2点）",
-        measuring: "縮尺合わせ（2点）",
-        drawing: "施工範囲指定（点追加/ドラッグ）",
-        polyAdjust: "範囲調整（点ドラッグ）",
-        gridAdjust: "グリッド調整（グリッドドラッグ）",
-        settingBase: "基準点（交点スナップ）",
-      }[mode] || mode;
-      setStatus("工程: " + label, null);
-    }
-
-    function getPhotoLocalPoint(stagePoint) {
-      const inv = photoGroup.getAbsoluteTransform().copy().invert();
-      return inv.point(stagePoint);
-    }
-
-    function stagePxToMmX(px) {
-      if (!mmPerLocalPx) return 0;
-      const sx = photoGroup.scaleX() || 1;
-      return (px / sx) * mmPerLocalPx;
-    }
-    function stagePxToMmY(px) {
-      if (!mmPerLocalPx) return 0;
-      const sy = photoGroup.scaleY() || 1;
-      return (px / sy) * mmPerLocalPx;
-    }
-
-    function updateZoom(pos) {
-      if (!bgImage.image()) return;
-      zoomLayer.visible(true);
-
-      let zX = pos.x, zY = pos.y - 140;
-      if (zX < 90) zX = 90;
-      if (zX > stage.width() - 90) zX = stage.width() - 90;
-      if (zY < 90) zY = pos.y + 140;
-
-      zoomGroup.position({ x: zX, y: zY });
-
-      const localPos = getPhotoLocalPoint(pos);
-      const mag = 4;
-
-      zoomContent.image(bgImage.image());
-      zoomContent.width(bgImage.image().width);
-      zoomContent.height(bgImage.image().height);
-
-      zoomContent.scale({ x: photoGroup.scaleX() * mag, y: photoGroup.scaleY() * mag });
-      zoomContent.rotation(photoGroup.rotation());
-
-      zoomContent.position({
-        x: -localPos.x * photoGroup.scaleX() * mag,
-        y: -localPos.y * photoGroup.scaleY() * mag,
-      });
-
-      zoomContent.clipFunc((ctx) => {
-        ctx.arc(
-          localPos.x * photoGroup.scaleX() * mag,
-          localPos.y * photoGroup.scaleY() * mag,
-          85, 0, Math.PI * 2
-        );
-      });
-
-      zoomLayer.batchDraw();
-    }
-
-    function destroyDots(name) {
-      uiLayer.find("." + name).forEach((d) => d.destroy());
-      uiLayer.draw();
-    }
-
-    function syncPoly() {
-      const dots = uiLayer.find(".polyDot");
-      const pts = [];
-      dots.forEach((d) => pts.push(d.x(), d.y()));
-      polyShape.points(pts);
-      uiLayer.batchDraw();
-      updateBaseDimsToPoly();
-      updateAreaAndCount();
-    }
-
-    function setPolyDotsDraggable(on) {
-      uiLayer.find(".polyDot").forEach(d => d.draggable(!!on));
-    }
-
-    function snapToGrid(stagePos) {
-      if (!gridGroup.visible() || !lastTileStageW || !lastTileStageH) return stagePos;
-      const localX = stagePos.x - gridGroup.x();
-      const localY = stagePos.y - gridGroup.y();
-      const snapX = Math.round(localX / lastTileStageW) * lastTileStageW;
-      const snapY = Math.round(localY / lastTileStageH) * lastTileStageH;
-      return { x: gridGroup.x() + snapX, y: gridGroup.y() + snapY };
-    }
-
-    function resnapBaseDot() {
-      const base = uiLayer.findOne(".baseDot");
-      if (!base) return;
-      const s = snapToGrid({ x: base.x(), y: base.y() });
-      base.position(s);
-      uiLayer.draw();
-      updateBaseDimsToPoly();
-    }
-
-    function createPoint(pos, color, dotName, { snapOnCreate = false, snapOnDragEnd = false } = {}) {
-      const p0 = snapOnCreate ? snapToGrid(pos) : pos;
-
-      const g = new Konva.Group({ x: p0.x, y: p0.y, draggable: true, name: dotName });
-      g.add(new Konva.Circle({ radius: 35, fill: "transparent", listening: true }));
-      g.add(new Konva.Line({ points: [-18, 0, 18, 0], stroke: color, strokeWidth: 2, listening: false }));
-      g.add(new Konva.Line({ points: [0, -18, 0, 18], stroke: color, strokeWidth: 2, listening: false }));
-      g.add(new Konva.Circle({ radius: 5, fill: color, stroke: "#fff", strokeWidth: 1, listening: false }));
-
-      g.on("dragmove", () => {
-        updateZoom(g.position());
-        if (dotName === "polyDot") syncPoly();
-        if (dotName === "baseDot") updateBaseDimsToPoly();
-      });
-
-      g.on("dragend", () => {
-        zoomLayer.visible(false);
-        if (snapOnDragEnd) {
-          const s = snapToGrid({ x: g.x(), y: g.y() });
-          g.position(s);
-        }
-        if (dotName === "polyDot") syncPoly();
-        if (dotName === "baseDot") updateBaseDimsToPoly();
-        uiLayer.draw();
-      });
-
-      uiLayer.add(g);
-      return g;
-    }
-
-    // ========= 面積・枚数積算 =========
-    function polygonAreaSigned(points) {
-      const n = points.length / 2;
-      if (n < 3) return 0;
-      let sum = 0;
-      for (let i = 0; i < n; i++) {
-        const j = (i + 1) % n;
-        const xi = points[i*2], yi = points[i*2+1];
-        const xj = points[j*2], yj = points[j*2+1];
-        sum += (xi * yj - xj * yi);
-      }
-      return sum / 2;
-    }
-
-    function updateAreaAndCount() {
-      const poly = polyShape.points();
-      if (!mmPerLocalPx || poly.length < 6) {
-        areaOut.textContent = "- ㎡";
-        needTilesOut.textContent = "- 枚";
-        orderTilesOut.textContent = "- 枚";
-        return;
-      }
-
-      const sx = photoGroup.scaleX() || 1;
-      const sy = photoGroup.scaleY() || 1;
-      const areaStage = Math.abs(polygonAreaSigned(poly));
-      const areaLocal = areaStage / (sx * sy);
-
-      const areaMm2 = areaLocal * (mmPerLocalPx * mmPerLocalPx);
-      const areaM2 = areaMm2 / 1e6;
-
-      const twMm = parseFloat(document.getElementById("tileWidthInput").value);
-      const thMm = parseFloat(document.getElementById("tileHeightInput").value);
-      const tileAreaMm2 = (isFinite(twMm) && isFinite(thMm) && twMm > 0 && thMm > 0) ? (twMm * thMm) : 0;
-
-      let need = null;
-      let order = null;
-
-      if (tileAreaMm2 > 0) {
-        need = areaMm2 / tileAreaMm2;
-
-        const wastePct = parseFloat(document.getElementById("wastePctInput").value);
-        const w = (isFinite(wastePct) ? wastePct : 0) / 100;
-        order = Math.ceil(need * (1 + Math.max(0, w)));
-      }
-
-      areaOut.textContent = isFinite(areaM2) ? `${areaM2.toFixed(3)} ㎡` : "- ㎡";
-      needTilesOut.textContent = (need == null || !isFinite(need)) ? "- 枚" : `${Math.ceil(need)} 枚`;
-      orderTilesOut.textContent = (order == null || !isFinite(order)) ? "- 枚" : `${order} 枚`;
-    }
-
-    // ========= 寸法（基準点→ポリゴン境界交点まで） =========
-    function updateBaseDimsToPoly() {
-      const base = uiLayer.findOne(".baseDot");
-      const poly = polyShape.points();
-      if (!base || !mmPerLocalPx || !gridGroup.visible() || poly.length < 6) {
-        setStatus(null, "X(左/右): - / -\nY(上/下): - / -");
-        return;
-      }
-
-      const bx = base.x();
-      const by = base.y();
-
-      // ★頂点ピタ対策：±epsで2回取って合成（片側 "-" を減らす）
-      const eps = BASE_INTERSECT_EPS;
-      const xs = [
-        ...intersectionsWithHorizontalLine(poly, by + eps),
-        ...intersectionsWithHorizontalLine(poly, by - eps),
-      ];
-      const ys = [
-        ...intersectionsWithVerticalLine(poly, bx + eps),
-        ...intersectionsWithVerticalLine(poly, bx - eps),
-      ];
-
-      const uniq = (arr) =>
-        Array.from(new Set(arr.map(v => Math.round(v * 1000) / 1000))).sort((a,b)=>a-b);
-
-      const xsU = uniq(xs);
-      const ysU = uniq(ys);
-
-      const leftX = maxLessThan(xsU, bx);
-      const rightX = minGreaterThan(xsU, bx);
-      const upY = maxLessThan(ysU, by);
-      const downY = minGreaterThan(ysU, by);
-
-      const dxL = (leftX == null) ? null : (bx - leftX);
-      const dxR = (rightX == null) ? null : (rightX - bx);
-      const dyU = (upY == null) ? null : (by - upY);
-      const dyD = (downY == null) ? null : (downY - by);
-
-      const xLmm = dxL == null ? null : Math.abs(stagePxToMmX(dxL));
-      const xRmm = dxR == null ? null : Math.abs(stagePxToMmX(dxR));
-      const yUmm = dyU == null ? null : Math.abs(stagePxToMmY(dyU));
-      const yDmm = dyD == null ? null : Math.abs(stagePxToMmY(dyD));
-
-      const fmt = (v) => (v == null || !isFinite(v)) ? "-" : v.toFixed(1) + "mm";
-      setStatus(null, `X(左/右): ${fmt(xLmm)} / ${fmt(xRmm)}\nY(上/下): ${fmt(yUmm)} / ${fmt(yDmm)}`);
-    }
-
-    function intersectionsWithHorizontalLine(poly, y0) {
-      const n = poly.length / 2;
-      const xs = [];
-      for (let i = 0; i < n; i++) {
-        const j = (i + 1) % n;
-        const x1 = poly[i * 2], y1 = poly[i * 2 + 1];
-        const x2 = poly[j * 2], y2 = poly[j * 2 + 1];
-        if (Math.abs(y2 - y1) < 1e-9) continue;
-        const minY = Math.min(y1, y2);
-        const maxY = Math.max(y1, y2);
-        if (y0 < minY || y0 >= maxY) continue; // 半開区間
-        const t = (y0 - y1) / (y2 - y1);
-        xs.push(x1 + (x2 - x1) * t);
-      }
-      xs.sort((a,b)=>a-b);
-      return xs;
-    }
-
-    // ★バグ修正済み（a/b未定義排除）
-    function intersectionsWithVerticalLine(poly, x0) {
-      const n = poly.length / 2;
-      const ys = [];
-      for (let i = 0; i < n; i++) {
-        const j = (i + 1) % n;
-        const x1 = poly[i * 2], y1 = poly[i * 2 + 1];
-        const x2 = poly[j * 2], y2 = poly[j * 2 + 1];
-        if (Math.abs(x2 - x1) < 1e-9) continue;
-        const minX = Math.min(x1, x2);
-        const maxX = Math.max(x1, x2);
-        if (x0 < minX || x0 >= maxX) continue; // 半開区間
-        const t = (x0 - x1) / (x2 - x1);
-        ys.push(y1 + (y2 - y1) * t);
-      }
-      ys.sort((a,b)=>a-b);
-      return ys;
-    }
-
-    function maxLessThan(arr, v) {
-      let best = null;
-      for (const a of arr) if (a < v && (best == null || a > best)) best = a;
-      return best;
-    }
-    function minGreaterThan(arr, v) {
-      let best = null;
-      for (const a of arr) if (a > v && (best == null || a < best)) best = a;
-      return best;
-    }
-
-    // ========= ポリゴン × 長方形 クリップ（Sutherland–Hodgman） =========
-    function clipPolygonToRect(polyPts, rx0, ry0, rx1, ry1) {
-      let output = polyPts;
-
-      const edges = [
-        { inside: (p) => p.x >= rx0, intersect: (a,b) => intersectWithVertical(a,b,rx0) }, // left
-        { inside: (p) => p.x <= rx1, intersect: (a,b) => intersectWithVertical(a,b,rx1) }, // right
-        { inside: (p) => p.y >= ry0, intersect: (a,b) => intersectWithHorizontal(a,b,ry0) }, // top
-        { inside: (p) => p.y <= ry1, intersect: (a,b) => intersectWithHorizontal(a,b,ry1) }, // bottom
-      ];
-
-      for (const edge of edges) {
-        const input = output;
-        output = [];
-        if (!input || input.length === 0) break;
-
-        let S = input[input.length - 1];
-        for (const E of input) {
-          const Ein = edge.inside(E);
-          const Sin = edge.inside(S);
-
-          if (Ein) {
-            if (!Sin) output.push(edge.intersect(S, E));
-            output.push(E);
-          } else if (Sin) {
-            output.push(edge.intersect(S, E));
-          }
-          S = E;
-        }
-      }
-      return output;
-
-      function intersectWithVertical(a,b,x) {
-        const dx = b.x - a.x;
-        if (Math.abs(dx) < 1e-9) return { x, y: a.y };
-        const t = (x - a.x) / dx;
-        return { x, y: a.y + (b.y - a.y) * t };
-      }
-      function intersectWithHorizontal(a,b,y) {
-        const dy = b.y - a.y;
-        if (Math.abs(dy) < 1e-9) return { x: a.x, y };
-        const t = (y - a.y) / dy;
-        return { x: a.x + (b.x - a.x) * t, y };
-      }
-    }
-
-    function getBBoxOfPoints(pts) {
-      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-      for (const p of pts) {
-        if (p.x < minX) minX = p.x;
-        if (p.y < minY) minY = p.y;
-        if (p.x > maxX) maxX = p.x;
-        if (p.y > maxY) maxY = p.y;
-      }
-      if (!isFinite(minX)) return null;
-      return { minX, minY, maxX, maxY };
-    }
-
-    // ========= Grid =========
-    function isPointInPoly(x, y, poly) {
-      let inside = false;
-      const n = poly.length / 2;
-      for (let i = 0, j = n - 1; i < n; j = i++) {
-        const xi = poly[i * 2], yi = poly[i * 2 + 1];
-        const xj = poly[j * 2], yj = poly[j * 2 + 1];
-        const intersect = (yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi + 0.0) + xi;
-        if (intersect) inside = !inside;
-      }
-      return inside;
-    }
-
-    function getPolyBounds(poly) {
-      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-      for (let i = 0; i < poly.length; i += 2) {
-        const x = poly[i], y = poly[i + 1];
-        if (x < minX) minX = x;
-        if (y < minY) minY = y;
-        if (x > maxX) maxX = x;
-        if (y > maxY) maxY = y;
-      }
-      return { minX, minY, maxX, maxY };
-    }
-
-    function updateGrid() {
-      if (!mmPerLocalPx) return;
-      const poly = polyShape.points();
-      if (poly.length < 6) return;
-
-      const twMm = parseFloat(document.getElementById("tileWidthInput").value);
-      const thMm = parseFloat(document.getElementById("tileHeightInput").value);
-      if (!isFinite(twMm) || !isFinite(thMm) || twMm <= 0 || thMm <= 0) return;
-
-      const dangerMm = Math.max(0, parseFloat(document.getElementById("dangerMmInput").value || "0"));
-
-      const tileLocalW = twMm / mmPerLocalPx;
-      const tileLocalH = thMm / mmPerLocalPx;
-
-      const tileStageW = tileLocalW * (photoGroup.scaleX() || 1);
-      const tileStageH = tileLocalH * (photoGroup.scaleY() || 1);
-      if (!isFinite(tileStageW) || !isFinite(tileStageH) || tileStageW <= 0 || tileStageH <= 0) return;
-
-      lastTileStageW = tileStageW;
-      lastTileStageH = tileStageH;
-
-      gridGroup.destroyChildren();
-
-      const b = getPolyBounds(poly);
-      const gx = gridGroup.x();
-      const gy = gridGroup.y();
-
-      // ★面積を稼ぐ：画面幅依存をやめて固定余白に
-      const extraI = GRID_MARGIN_TILES;
-      const extraJ = GRID_MARGIN_TILES;
-
-      const iMin = Math.floor((b.minX - gx) / tileStageW) - extraI;
-      const iMax = Math.ceil((b.maxX - gx) / tileStageW) + extraI;
-      const jMin = Math.floor((b.minY - gy) / tileStageH) - extraJ;
-      const jMax = Math.ceil((b.maxY - gy) / tileStageH) + extraJ;
-
-      const maxCells = GRID_MAX_CELLS;
-      const cells = (iMax - iMin + 1) * (jMax - jMin + 1);
-      if (cells > maxCells) {
-        alert(`グリッドが細かすぎます（cells=${cells}）。タイル寸法/縮尺/範囲を見直してください。`);
-        return;
-      }
-
-      const hitRect = new Konva.Rect({
-        x: iMin * tileStageW,
-        y: jMin * tileStageH,
-        width: (iMax - iMin + 1) * tileStageW,
-        height: (jMax - jMin + 1) * tileStageH,
-        fill: "rgba(0,0,0,0)",
-        listening: true
-      });
-      gridGroup.add(hitRect);
-
-      const polyObj = [];
-      for (let k = 0; k < poly.length; k += 2) polyObj.push({ x: poly[k], y: poly[k+1] });
-
-      for (let i = iMin; i <= iMax; i++) {
-        for (let j = jMin; j <= jMax; j++) {
-          const tx = i * tileStageW;
-          const ty = j * tileStageH;
-
-          const ax = tx + gx;
-          const ay = ty + gy;
-
-          const corners = [
-            [ax, ay],
-            [ax + tileStageW, ay],
-            [ax, ay + tileStageH],
-            [ax + tileStageW, ay + tileStageH],
-          ];
-
-          const insideCount = corners.filter((c) => isPointInPoly(c[0], c[1], poly)).length;
-          if (insideCount === 0) continue;
-
-          let stroke = "rgba(0,123,255,0.4)";
-          let fill = "rgba(0,123,255,0.1)";
-
-          if (dangerOn && dangerMm > 0) {
-            if (insideCount < 4) {
-              const rx0 = ax, ry0 = ay, rx1 = ax + tileStageW, ry1 = ay + tileStageH;
-              const clipped = clipPolygonToRect(polyObj, rx0, ry0, rx1, ry1);
-              const bb = (clipped && clipped.length >= 3) ? getBBoxOfPoints(clipped) : null;
-
-              if (bb) {
-                const wStage = Math.max(0, bb.maxX - bb.minX);
-                const hStage = Math.max(0, bb.maxY - bb.minY);
-                const wMm = Math.abs(stagePxToMmX(wStage));
-                const hMm = Math.abs(stagePxToMmY(hStage));
-                const minDim = Math.min(wMm, hMm);
-
-                if (minDim < dangerMm) {
-                  stroke = "red";
-                  fill = "rgba(255,0,0,0.22)";
-                }
-              } else {
-                const cx = ax + tileStageW / 2;
-                const cy = ay + tileStageH / 2;
-                if (!isPointInPoly(cx, cy, poly)) {
-                  stroke = "red";
-                  fill = "rgba(255,0,0,0.22)";
-                }
-              }
-            }
-          } else if (dangerOn) {
-            const cx = ax + tileStageW / 2;
-            const cy = ay + tileStageH / 2;
-            if (insideCount < 4 && !isPointInPoly(cx, cy, poly)) {
-              stroke = "red";
-              fill = "rgba(255,0,0,0.2)";
-            }
-          }
-
-          gridGroup.add(new Konva.Rect({
-            x: tx, y: ty,
-            width: tileStageW, height: tileStageH,
-            stroke, fill,
-            listening: false
-          }));
-        }
-      }
-
-      mainLayer.batchDraw();
-      updateBaseDimsToPoly();
-    }
-
-    gridGroup.on("dragend", () => {
-      updateGrid();
-      resnapBaseDot();
-    });
-
-    // ========= D-pad =========
-    function mmToStagePxX(mm){
-      if (!mmPerLocalPx) return 0;
-      const sx = photoGroup.scaleX() || 1;
-      return (mm / mmPerLocalPx) * sx;
-    }
-    function mmToStagePxY(mm){
-      if (!mmPerLocalPx) return 0;
-      const sy = photoGroup.scaleY() || 1;
-      return (mm / mmPerLocalPx) * sy;
-    }
-
-    let nudgeMm = 5;
-
-    function moveGridByMm(dxMm, dyMm){
-      if (!gridGroup.visible()) return;
-      const dx = mmToStagePxX(dxMm);
-      const dy = mmToStagePxY(dyMm);
-      gridGroup.position({ x: gridGroup.x() + dx, y: gridGroup.y() + dy });
-      updateGrid();
-      resnapBaseDot();
-    }
-
-    function setDpadVisible(on){
-      const el = document.getElementById("dpad");
-      el.style.display = on ? "block" : "none";
-      const c = document.getElementById("dCenter");
-      if (c) c.textContent = `${nudgeMm}mm`;
-    }
-
-    function bindDpad(){
-      const stop = (ev)=>{ ev.preventDefault(); ev.stopPropagation(); };
-      const hook = (id, dx, dy) => {
-        const btn = document.getElementById(id);
-        btn.addEventListener("pointerdown", (ev)=>{ stop(ev); moveGridByMm(dx, dy); });
-      };
-      hook("dUp", 0, -nudgeMm);
-      hook("dDown", 0, nudgeMm);
-      hook("dLeft", -nudgeMm, 0);
-      hook("dRight", nudgeMm, 0);
-
-      document.getElementById("dCenter").addEventListener("pointerdown", (ev)=>{
-        stop(ev);
-        if (nudgeMm === 5) nudgeMm = 1;
-        else if (nudgeMm === 1) nudgeMm = 10;
-        else nudgeMm = 5;
-
-        document.getElementById("dCenter").textContent = `${nudgeMm}mm`;
-
-        ["dUp","dDown","dLeft","dRight"].forEach(id=>{
-          const old = document.getElementById(id);
-          const clone = old.cloneNode(true);
-          old.parentNode.replaceChild(clone, old);
-        });
-
-        hook("dUp", 0, -nudgeMm);
-        hook("dDown", 0, nudgeMm);
-        hook("dLeft", -nudgeMm, 0);
-        hook("dRight", nudgeMm, 0);
-      });
-    }
-    bindDpad();
-
-    // ========= 最適割付 =========
-    function scoreGridAtPosition(gx, gy){
-      if (!mmPerLocalPx) return null;
-      const poly = polyShape.points();
-      if (poly.length < 6) return null;
-
-      const twMm = parseFloat(document.getElementById("tileWidthInput").value);
-      const thMm = parseFloat(document.getElementById("tileHeightInput").value);
-      if (!isFinite(twMm) || !isFinite(thMm) || twMm <= 0 || thMm <= 0) return null;
-
-      const dangerMm = Math.max(0, parseFloat(document.getElementById("dangerMmInput").value || "0"));
-
-      const tileLocalW = twMm / mmPerLocalPx;
-      const tileLocalH = thMm / mmPerLocalPx;
-
-      const tileStageW = tileLocalW * (photoGroup.scaleX() || 1);
-      const tileStageH = tileLocalH * (photoGroup.scaleY() || 1);
-      if (!isFinite(tileStageW) || !isFinite(tileStageH) || tileStageW <= 0 || tileStageH <= 0) return null;
-
-      const b = getPolyBounds(poly);
-
-      // ★updateGrid と同じ余白設定に統一
-      const extraI = GRID_MARGIN_TILES;
-      const extraJ = GRID_MARGIN_TILES;
-
-      const iMin = Math.floor((b.minX - gx) / tileStageW) - extraI;
-      const iMax = Math.ceil((b.maxX - gx) / tileStageW) + extraI;
-      const jMin = Math.floor((b.minY - gy) / tileStageH) - extraJ;
-      const jMax = Math.ceil((b.maxY - gy) / tileStageH) + extraJ;
-
-      const maxCells = GRID_MAX_CELLS;
-      const cells = (iMax - iMin + 1) * (jMax - jMin + 1);
-      if (cells > maxCells) return { tooMany: true, cells };
-
-      const polyObj = [];
-      for (let k = 0; k < poly.length; k += 2) polyObj.push({ x: poly[k], y: poly[k+1] });
-
-      let partialCount = 0;
-      let dangerCount = 0;
-
-      for (let i = iMin; i <= iMax; i++) {
-        for (let j = jMin; j <= jMax; j++) {
-          const tx = i * tileStageW;
-          const ty = j * tileStageH;
-
-          const ax = tx + gx;
-          const ay = ty + gy;
-
-          const corners = [
-            [ax, ay],
-            [ax + tileStageW, ay],
-            [ax, ay + tileStageH],
-            [ax + tileStageW, ay + tileStageH],
-          ];
-
-          const insideCount = corners.filter((c) => isPointInPoly(c[0], c[1], poly)).length;
-          if (insideCount === 0) continue;
-
-          if (insideCount < 4) partialCount++;
-
-          if (dangerOn && insideCount < 4) {
-            if (dangerMm > 0) {
-              const rx0 = ax, ry0 = ay, rx1 = ax + tileStageW, ry1 = ay + tileStageH;
-              const clipped = clipPolygonToRect(polyObj, rx0, ry0, rx1, ry1);
-              const bb = (clipped && clipped.length >= 3) ? getBBoxOfPoints(clipped) : null;
-
-              let isDanger = false;
-              if (bb) {
-                const wStage = Math.max(0, bb.maxX - bb.minX);
-                const hStage = Math.max(0, bb.maxY - bb.minY);
-                const wMm = Math.abs(stagePxToMmX(wStage));
-                const hMm = Math.abs(stagePxToMmY(hStage));
-                const minDim = Math.min(wMm, hMm);
-                if (minDim < dangerMm) isDanger = true;
-              } else {
-                const cx = ax + tileStageW / 2;
-                const cy = ay + tileStageH / 2;
-                if (!isPointInPoly(cx, cy, poly)) isDanger = true;
-              }
-              if (isDanger) dangerCount++;
-            } else {
-              const cx = ax + tileStageW / 2;
-              const cy = ay + tileStageH / 2;
-              if (!isPointInPoly(cx, cy, poly)) dangerCount++;
-            }
-          }
-        }
-      }
-
-      return { dangerCount, partialCount, tileStageW, tileStageH };
-    }
-
-    function modPositive(a, m){
-      return ((a % m) + m) % m;
-    }
-
-    async function optimizeGrid(){
-      if (!gridGroup.visible()) { alert("先にグリッドを生成してください。"); return; }
-      if (!mmPerLocalPx) { alert("先に縮尺合わせを完了してください。"); return; }
-      if (polyShape.points().length < 6) { alert("先に施工範囲（ポリゴン）を完了してください。"); return; }
-
-      setStatus("最適割付：探索中…", null);
-
-      const baseX = gridGroup.x();
-      const baseY = gridGroup.y();
-
-      const s0 = scoreGridAtPosition(baseX, baseY);
-      if (!s0) { alert("スコア計算に失敗"); return; }
-      if (s0.tooMany) { alert(`グリッドが細かすぎます（cells=${s0.cells}）。タイル寸法/縮尺/範囲を見直してください。`); return; }
-
-      const W = s0.tileStageW;
-      const H = s0.tileStageH;
-
-      const baseOx = modPositive(baseX, W);
-      const baseOy = modPositive(baseY, H);
-
-      const coarseMm = 5;
-      const fineMm = 1;
-      const coarseStepX = Math.max(1, mmToStagePxX(coarseMm));
-      const coarseStepY = Math.max(1, mmToStagePxY(coarseMm));
-      const fineStepX = Math.max(1, mmToStagePxX(fineMm));
-      const fineStepY = Math.max(1, mmToStagePxY(fineMm));
-
-      const search = (stepX, stepY, centerOx, centerOy, radiusX, radiusY) => {
-        let best = null;
-
-        const x0 = (radiusX == null) ? 0 : Math.max(0, centerOx - radiusX);
-        const x1 = (radiusX == null) ? W : Math.min(W, centerOx + radiusX);
-        const y0 = (radiusY == null) ? 0 : Math.max(0, centerOy - radiusY);
-        const y1 = (radiusY == null) ? H : Math.min(H, centerOy + radiusY);
-
-        for (let ox = x0; ox < x1; ox += stepX) {
-          for (let oy = y0; oy < y1; oy += stepY) {
-            const gx = baseX - baseOx + ox;
-            const gy = baseY - baseOy + oy;
-
-            const sc = scoreGridAtPosition(gx, gy);
-            if (!sc || sc.tooMany) continue;
-
-            const cand = {
-              gx, gy, ox, oy,
-              danger: sc.dangerCount,
-              partial: sc.partialCount,
-              move: Math.hypot(gx - baseX, gy - baseY)
-            };
-
-            if (!best) best = cand;
-            else {
-              if (cand.danger < best.danger) best = cand;
-              else if (cand.danger === best.danger && cand.partial < best.partial) best = cand;
-              else if (cand.danger === best.danger && cand.partial === best.partial && cand.move < best.move) best = cand;
-            }
-          }
-        }
-        return best;
-      };
-
-      const bestCoarse = search(coarseStepX, coarseStepY, null, null, null, null);
-      if (!bestCoarse) { alert("最適化できませんでした"); return; }
-
-      const radX = coarseStepX * 2;
-      const radY = coarseStepY * 2;
-      const bestFine = search(fineStepX, fineStepY, bestCoarse.ox, bestCoarse.oy, radX, radY) || bestCoarse;
-
-      gridGroup.position({ x: bestFine.gx, y: bestFine.gy });
-      updateGrid();
-      resnapBaseDot();
-
-      setStatus(`最適割付：完了（危険=${bestFine.danger} / 欠け=${bestFine.partial}）`, null);
-    }
-
-    // ========= file load =========
-    document.getElementById("fileInput").onchange = async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = async function () {
-        if (file.type === "application/pdf") {
-          const pdf = await pdfjsLib.getDocument(new Uint8Array(this.result)).promise;
-          const page = await pdf.getPage(1);
-          const viewport = page.getViewport({ scale: 2.5 });
-
-          const canvas = document.createElement("canvas");
-          canvas.height = viewport.height;
-          canvas.width = viewport.width;
-
-          await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
-          setupImage(canvas);
-        } else {
-          const img = new Image();
-          img.onload = () => setupImage(img);
-          img.src = reader.result;
-        }
-      };
-
-      if (file.type === "application/pdf") reader.readAsArrayBuffer(file);
-      else reader.readAsDataURL(file);
-    };
-
-    function setupImage(source) {
-      bgImage.image(source);
-
-      const sc = Math.min(stage.width() / source.width, stage.height() / source.height);
-      photoGroup.scale({ x: sc, y: sc });
-      photoGroup.position({ x: 0, y: 0 });
-      photoGroup.rotation(0);
-      photoGroup.offset({ x: 0, y: 0 });
-
-      mmPerLocalPx = 0;
-      lastTileStageW = 0;
-      lastTileStageH = 0;
-
-      lockPhoto(false);
-      setMode("idle");
-
-      destroyDots("alignDot");
-      destroyDots("scaleDot");
-      destroyDots("polyDot");
-      destroyDots("baseDot");
-
-      polyShape.points([]);
-      alignLine.visible(false);
-      scaleLine.visible(false);
-
-      gridGroup.visible(false);
-      gridGroup.draggable(false);
-      gridGroup.position({ x: 0, y: 0 });
-      gridGroup.destroyChildren();
-
-      document.getElementById("alignInputArea").style.display = "none";
-      document.getElementById("measureInputArea").style.display = "none";
-      document.getElementById("polyControls").style.display = "none";
-      document.getElementById("polyEditDoneBtn").style.display = "none";
-      document.getElementById("polyEditBtn").style.display = "block";
-
-      setDpadVisible(false);
-
-      mainLayer.draw();
-      uiLayer.draw();
-
-      setStatus("図面読み込み完了", "X(左/右): - / -\nY(上/下): - / -");
-      updateAreaAndCount();
-    }
-
-    // ========= UI =========
-    document.getElementById("toggleBtn").onclick = () =>
-      document.getElementById("controls").classList.toggle("minimized");
-
-    document.getElementById("lockBtn").onclick = () => {
-      lockPhoto(!photoLocked);
-      mainLayer.draw();
-    };
-
-    // Align
-    document.getElementById("alignBtn").onclick = () => {
-      if (!bgImage.image()) return;
-      setMode("aligning");
-      destroyDots("alignDot");
-      alignLine.visible(false);
-      lockPhoto(false);
-      document.getElementById("alignInputArea").style.display = "block";
-    };
-
-    document.getElementById("applyAlignBtn").onclick = () => {
-      const dots = uiLayer.find(".alignDot");
-      if (dots.length < 2) return;
-
-      const dx = dots[1].x() - dots[0].x();
-      const dy = dots[1].y() - dots[0].y();
-      let angle = (Math.atan2(dy, dx) * 180) / Math.PI;
-      if (angle > 90) angle -= 180;
-      if (angle < -90) angle += 180;
-
-      const centerStage = { x: stage.width() / 2, y: stage.height() / 2 };
-      const centerLocal = getPhotoLocalPoint(centerStage);
-
-      photoGroup.offset(centerLocal);
-      photoGroup.position(centerStage);
-      photoGroup.rotation(photoGroup.rotation() - angle);
-
-      destroyDots("alignDot");
-      alignLine.visible(false);
-      document.getElementById("alignInputArea").style.display = "none";
-
-      setMode("idle");
-      mainLayer.draw();
-      uiLayer.draw();
-
-      if (gridGroup.visible()) updateGrid();
-      updateBaseDimsToPoly();
-      updateAreaAndCount();
-    };
-
-    // Scale
-    document.getElementById("measureBtn").onclick = () => {
-      if (!bgImage.image()) return;
-      setMode("measuring");
-      destroyDots("scaleDot");
-      scaleLine.visible(false);
-      lockPhoto(false);
-      document.getElementById("measureInputArea").style.display = "block";
-    };
-
-    document.getElementById("applyScaleBtn").onclick = () => {
-      const dots = uiLayer.find(".scaleDot");
-      if (dots.length < 2) return;
-
-      const realMm = parseFloat(document.getElementById("realDistInput").value);
-      if (!isFinite(realMm) || realMm <= 0) return;
-
-      const p0 = getPhotoLocalPoint({ x: dots[0].x(), y: dots[0].y() });
-      const p1 = getPhotoLocalPoint({ x: dots[1].x(), y: dots[1].y() });
-      const distLocalPx = Math.hypot(p1.x - p0.x, p1.y - p0.y);
-      if (distLocalPx <= 0.00001) return;
-
-      mmPerLocalPx = realMm / distLocalPx;
-
-      document.getElementById("measureInputArea").style.display = "none";
-      setMode("idle");
-      setStatus(`縮尺確定：${mmPerLocalPx.toFixed(4)} mm/px(図面)`, null);
-
-      if (gridGroup.visible()) updateGrid();
-      updateBaseDimsToPoly();
-      updateAreaAndCount();
-    };
-
-    // Polygon
-    document.getElementById("polyBtn").onclick = () => {
-      if (!bgImage.image()) return;
-      setMode("drawing");
-      lockPhoto(true);
-
-      gridGroup.visible(false);
-      gridGroup.draggable(false);
-      setDpadVisible(false);
-
-      setPolyDotsDraggable(true);
-
-      document.getElementById("polyControls").style.display = "block";
-      document.getElementById("polyEditDoneBtn").style.display = "none";
-      document.getElementById("polyEditBtn").style.display = "block";
-      mainLayer.draw();
-      uiLayer.draw();
-    };
-
-    document.getElementById("undoBtn").onclick = () => {
-      const ds = uiLayer.find(".polyDot");
-      if (ds.length > 0) {
-        ds[ds.length - 1].destroy();
-        syncPoly();
-      }
-    };
-
-    document.getElementById("closePolyBtn").onclick = () => {
-      document.getElementById("polyControls").style.display = "none";
-      setMode("idle");
-      setPolyDotsDraggable(false);
-      setStatus("施工範囲確定（範囲ロック）", null);
-      uiLayer.draw();
-      updateBaseDimsToPoly();
-      updateAreaAndCount();
-      if (gridGroup.visible()) updateGrid();
-    };
-
-    document.getElementById("polyEditBtn").onclick = () => {
-      const poly = polyShape.points();
-      if (poly.length < 6) { alert("先に施工範囲を完了してください。"); return; }
-
-      setMode("polyAdjust");
-      lockPhoto(true);
-      setPolyDotsDraggable(true);
-
-      document.getElementById("polyEditBtn").style.display = "none";
-      document.getElementById("polyEditDoneBtn").style.display = "block";
-      setStatus("範囲調整中：点ドラッグ → 調整完了でロック", null);
-      uiLayer.draw();
-    };
-
-    document.getElementById("polyEditDoneBtn").onclick = () => {
-      setMode("idle");
-      setPolyDotsDraggable(false);
-      document.getElementById("polyEditDoneBtn").style.display = "none";
-      document.getElementById("polyEditBtn").style.display = "block";
-      setStatus("範囲調整完了（範囲ロック）", null);
-      uiLayer.draw();
-      if (gridGroup.visible()) updateGrid();
-      updateBaseDimsToPoly();
-      updateAreaAndCount();
-    };
-
-    // Grid
-    document.getElementById("showGridBtn").onclick = () => {
-      if (!mmPerLocalPx) { alert("先に縮尺合わせを完了してください。"); return; }
-      if (polyShape.points().length < 6) { alert("先に施工範囲（ポリゴン）を完了してください。"); return; }
-
-      setMode("gridAdjust");
-      lockPhoto(true);
-
-      gridGroup.visible(true);
-      gridGroup.draggable(true);
-
-      if (gridGroup.x() === 0 && gridGroup.y() === 0) {
-        gridGroup.position({ x: stage.width() / 2, y: stage.height() / 2 });
-      }
-
-      updateGrid();
-      setDpadVisible(true);
-
-      mainLayer.draw();
-      updateAreaAndCount();
-    };
-
-    document.getElementById("confirmGridBtn").onclick = () => {
-      if (!gridGroup.visible()) return;
-      setMode("idle");
-      gridGroup.draggable(false);
-      lockPhoto(true);
-      setPolyDotsDraggable(false);
-      resnapBaseDot();
-      setStatus("グリッド確定（固定）", null);
-      mainLayer.draw();
-      updateAreaAndCount();
-    };
-
-    document.getElementById("optBtn").onclick = () => {
-      optimizeGrid();
-    };
-
-    // Danger + inputs
-    document.getElementById("dangerToggleBtn").onclick = () => {
-      dangerOn = !dangerOn;
-      document.getElementById("dangerToggleBtn").textContent = "危険小片：" + (dangerOn ? "ON" : "OFF");
-      if (gridGroup.visible()) updateGrid();
-      updateBaseDimsToPoly();
-    };
-    document.getElementById("dangerMmInput").addEventListener("change", () => {
-      if (gridGroup.visible()) updateGrid();
-    });
-
-    // Tile size / waste % change => recalc
-    document.getElementById("tileWidthInput").addEventListener("change", () => { if (gridGroup.visible()) updateGrid(); updateAreaAndCount(); });
-    document.getElementById("tileHeightInput").addEventListener("change", () => { if (gridGroup.visible()) updateGrid(); updateAreaAndCount(); });
-    document.getElementById("wastePctInput").addEventListener("change", () => { updateAreaAndCount(); });
-
-    // Base point
-    document.getElementById("basePointBtn").onclick = () => {
-      if (!gridGroup.visible()) { alert("先にグリッドを生成してください。"); return; }
-      if (polyShape.points().length < 6) { alert("先に施工範囲（ポリゴン）を完了してください。"); return; }
-      setMode("settingBase");
-      lockPhoto(true);
-      setStatus("基準点をタップ（交点スナップ）→下に境界までの寸法が出ます", null);
-    };
-
-    // ========= ★ズレ対策 pointerdown =========
-    function getPointerPos(e){
-      stage.setPointersPositions(e.evt);
-      return stage.getPointerPosition();
-    }
-
-    stage.on("pointerdown", (e) => {
-      if (mode === "idle") return;
-
-      const layer = e.target && e.target.getLayer && e.target.getLayer();
-      if (layer === uiLayer) return;
-
-      if (mode === "drawing") {
-        if (e.target !== bgImage && e.target !== stage) return;
-      }
-
-      const pos = getPointerPos(e);
-      if (!pos) return;
-
-      if (mode === "aligning") {
-        if (uiLayer.find(".alignDot").length < 2) {
-          createPoint(pos, "#6f42c1", "alignDot");
-          const dots = uiLayer.find(".alignDot");
-          if (dots.length === 2) {
-            alignLine.points([dots[0].x(), dots[0].y(), dots[1].x(), dots[1].y()]);
-            alignLine.visible(true);
-          }
-          uiLayer.draw();
-        }
-      }
-      else if (mode === "measuring") {
-        if (uiLayer.find(".scaleDot").length < 2) {
-          createPoint(pos, "red", "scaleDot");
-          const dots = uiLayer.find(".scaleDot");
-          if (dots.length === 2) {
-            scaleLine.points([dots[0].x(), dots[0].y(), dots[1].x(), dots[1].y()]);
-            scaleLine.visible(true);
-          }
-          uiLayer.draw();
-        }
-      }
-      else if (mode === "drawing") {
-        createPoint(pos, "#fd7e14", "polyDot");
-        syncPoly();
-      }
-      else if (mode === "settingBase") {
-        destroyDots("baseDot");
-        createPoint(pos, "#00bfff", "baseDot", { snapOnCreate: true, snapOnDragEnd: true });
-        setMode("idle");
-        updateBaseDimsToPoly();
-        uiLayer.draw();
-        setStatus("基準点 設置完了（境界までの寸法表示）", null);
-      }
-    });
-
-    // Save
-    document.getElementById("saveImageBtn").onclick = () => {
-      const controls = document.getElementById("controls");
-      controls.style.display = "none";
-      setTimeout(() => {
-        const link = document.createElement("a");
-        link.download = "割付図.png";
-        link.href = stage.toDataURL({ pixelRatio: 2 });
-        link.click();
-        controls.style.display = "block";
-      }, 100);
-    };
-
-    // Resize
-    window.addEventListener("resize", () => {
-      stage.width(window.innerWidth);
-      stage.height(window.innerHeight);
-      mainLayer.draw();
-      uiLayer.draw();
-      zoomLayer.draw();
-      if (gridGroup.visible()) {
-        updateGrid();
-        resnapBaseDot();
-      }
-      updateBaseDimsToPoly();
-      updateAreaAndCount();
-    });
-
-    // init
-    document.getElementById("alignInputArea").style.display = "none";
-    document.getElementById("measureInputArea").style.display = "none";
-    document.getElementById("polyControls").style.display = "none";
-    document.getElementById("polyEditDoneBtn").style.display = "none";
-    lockPhoto(false);
-    setMode("idle");
-    setStatus("図面を読み込んで開始", "X(左/右): - / -\nY(上/下): - / -");
-    updateAreaAndCount();
-    setDpadVisible(false);
-  </script>
 </body>
 </html>
