@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>割付ポンッ！ - v3.5.6 操作バー位置150版</title>
+  <title>割付ポンッ！ - v3.6.3.4 積算タグ版</title>
 
   <script src="https://unpkg.com/konva@9/konva.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
@@ -74,7 +74,6 @@
       -webkit-backdrop-filter: blur(12px) saturate(1.1);
     }
 
-    /* top */
     #topBar{
       position: fixed;
       top: calc(6px + var(--safe-top));
@@ -150,6 +149,49 @@
     }
     #topSub::-webkit-scrollbar{ display:none; }
 
+    #estimateToggleBtn{
+      flex: 0 0 auto;
+    }
+
+    #estimatePanel{
+      pointer-events: auto;
+      display: none;
+      padding: 8px;
+      border-radius: 16px;
+    }
+
+    .estimateGrid{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .estimateItem{
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 8px 9px;
+      min-height: 52px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+    }
+
+    .estimateLabel{
+      font-size: 9px;
+      color: rgba(255,255,255,0.68);
+      font-weight: 700;
+      line-height: 1.1;
+    }
+
+    .estimateValue{
+      font-size: 13px;
+      color: #fff;
+      font-weight: 800;
+      line-height: 1.15;
+      word-break: break-word;
+    }
+
     .miniChip{
       border-radius: 999px;
       padding: 5px 9px;
@@ -184,11 +226,10 @@
       font-weight: 700;
     }
 
-    /* left hud */
     #leftDock{
       position: fixed;
       left: 18px;
-      bottom: calc(150px + var(--safe-bottom));
+      bottom: calc(116px + var(--safe-bottom));
       z-index: 112;
       display: flex;
       flex-direction: column;
@@ -198,7 +239,7 @@
     }
 
     #leftDock.base-mini-mode{
-      bottom: calc(150px + var(--safe-bottom));
+      bottom: calc(116px + var(--safe-bottom));
     }
 
     #zoomHud{
@@ -232,6 +273,8 @@
     }
 
     #zoomHud #pointDoneBtn,
+    #zoomHud #pointPrevBtn,
+    #zoomHud #pointNextBtn,
     #zoomHud #gridReEditBtn{
       width: auto;
       font-size: 10px;
@@ -257,12 +300,11 @@
       padding: 0 10px;
     }
 
-    /* dpad */
     #dpad{
       position: fixed;
       right: 18px;
       left: auto;
-      bottom: calc(154px + var(--safe-bottom));
+      bottom: calc(124px + var(--safe-bottom));
       z-index: 113;
       pointer-events: auto;
       display: none;
@@ -315,29 +357,6 @@
         inset 0 1px 0 rgba(255,255,255,0.10);
     }
 
-    /* status */
-    #statusBar {
-      position: fixed;
-      left: 10px;
-      right: 10px;
-      bottom: calc(74px + var(--safe-bottom));
-      z-index: 80;
-      background: rgba(0,0,0,0.34);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 14px;
-      color: #fff;
-      padding: 7px 10px;
-      font-size: 11px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      pointer-events: none;
-    }
-
-    #statusLeft { white-space: nowrap; overflow:hidden; text-overflow: ellipsis; }
-    #statusRight { white-space: pre-wrap; line-height: 1.25; color: rgba(255,255,255,0.82); }
-
-    /* bottom */
     #bottomBar{
       position: fixed;
       left: 10px;
@@ -532,6 +551,7 @@
         <button class="stepTab" data-step="grid">グリッド</button>
       </div>
 
+      <button id="estimateToggleBtn" class="stepTab" type="button">積算</button>
       <button id="menuBtn" type="button">⋯</button>
     </div>
 
@@ -539,6 +559,35 @@
       <div class="miniChip" id="chipFile">図面: 読込前</div>
       <div class="miniChip" id="chipScale">縮尺: 未確定</div>
       <div class="miniChip" id="chipPoly">範囲: 未完了</div>
+    </div>
+
+    <div id="estimatePanel" class="glass">
+      <div class="estimateGrid">
+        <div class="estimateItem">
+          <div class="estimateLabel">㎡数</div>
+          <div class="estimateValue" id="chipArea">-</div>
+        </div>
+        <div class="estimateItem">
+          <div class="estimateLabel">タイル枚数</div>
+          <div class="estimateValue" id="chipTiles">-</div>
+        </div>
+        <div class="estimateItem">
+          <div class="estimateLabel">ロス率</div>
+          <div class="estimateValue" id="chipLoss">-</div>
+        </div>
+        <div class="estimateItem">
+          <div class="estimateLabel">端材候補</div>
+          <div class="estimateValue" id="chipReuseCand">-</div>
+        </div>
+        <div class="estimateItem">
+          <div class="estimateLabel">2枚取り</div>
+          <div class="estimateValue" id="chipReusePair">-</div>
+        </div>
+        <div class="estimateItem">
+          <div class="estimateLabel">再利用後</div>
+          <div class="estimateValue" id="chipReuseTiles">-</div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -553,7 +602,9 @@
       <button id="zoomInBtn">＋</button>
       <button id="zoomOutBtn">－</button>
       <button id="zoomResetBtn">⌂</button>
-      <button id="pointDoneBtn">点調整完了</button>
+      <button id="pointPrevBtn">◀前点</button>
+      <button id="pointNextBtn">次点▶</button>
+      <button id="pointDoneBtn">点完了</button>
       <button id="gridReEditBtn">グリッド再調整</button>
     </div>
   </div>
@@ -564,11 +615,6 @@
       <button id="dLeft">◀</button><button id="dCenter" class="center">5mm</button><button id="dRight">▶</button>
       <div></div><button id="dDown">▼</button><div></div>
     </div>
-  </div>
-
-  <div id="statusBar">
-    <div id="statusLeft">図面を読み込んで開始</div>
-    <div id="statusRight">X左: -\nX右: -\nY上: -\nY下: -</div>
   </div>
 
   <div id="bottomBar" class="glass">
@@ -662,13 +708,15 @@ const STROKE_GRID = 0.6;
 const CROSS_HALF = 18;
 const DOT_RADIUS = 5;
 const HIT_RADIUS = 42;
+const HIT_RADIUS_POLY_ADJUST = 24;
+const PICK_NEAR_THRESHOLD_PX = 44;
 
 const DRAG_THRESHOLD_PX = 4;
 const POINT_STEP_FINE = 0.5;
 const POINT_STEP_COARSE = 1;
-const SNAP_STAGE_PX = 12;
-const AXIS_SNAP_STAGE_PX = 10;
-const GRID_SNAP_STAGE_PX = 14;
+const SNAP_STAGE_PX = 6;
+const AXIS_SNAP_STAGE_PX = 5;
+const GRID_SNAP_STAGE_PX = 7;
 const REPEAT_DELAY = 260;
 const REPEAT_INTERVAL = 42;
 const POSITION_ROUND_UNIT = 0.25;
@@ -697,6 +745,7 @@ const polyShape = new Konva.Line({
   points: [],
   listening: false
 });
+
 const alignLine = new Konva.Line({
   stroke: "#6f42c1",
   strokeWidth: STROKE_THIN,
@@ -704,6 +753,7 @@ const alignLine = new Konva.Line({
   visible: false,
   listening: false
 });
+
 const scaleLine = new Konva.Line({
   stroke: "red",
   strokeWidth: STROKE_THIN,
@@ -713,21 +763,52 @@ const scaleLine = new Konva.Line({
 });
 
 const zoomGroup = new Konva.Group({ listening: false });
+const zoomClipCircle = new Konva.Circle({ radius: 85, stroke: "#fff", strokeWidth: 2, fill: "#000", listening: false });
 const zoomContent = new Konva.Image({ listening: false });
-zoomGroup.add(
-  new Konva.Circle({ radius: 85, stroke: "#fff", strokeWidth: 2, fill: "#000", listening: false }),
-  zoomContent
-);
-zoomGroup.add(
-  new Konva.Line({ points: [-20, 0, 20, 0], stroke: "#0f0", strokeWidth: 2, listening: false }),
-  new Konva.Line({ points: [0, -20, 0, 20], stroke: "#0f0", strokeWidth: 2, listening: false })
-);
+const zoomCrossH = new Konva.Line({ points: [-20, 0, 20, 0], stroke: "#0f0", strokeWidth: 2, listening: false });
+const zoomCrossV = new Konva.Line({ points: [0, -20, 0, 20], stroke: "#0f0", strokeWidth: 2, listening: false });
+
+zoomGroup.add(zoomClipCircle, zoomContent, zoomCrossH, zoomCrossV);
 zoomLayer.add(zoomGroup);
 
 photoGroup.add(bgImage);
 mainLayer.add(photoGroup, gridGroup);
 uiLayer.add(polyShape, alignLine, scaleLine);
 stage.add(mainLayer, uiLayer, zoomLayer);
+
+const model = {
+  alignPoints: [],
+  scalePoints: [],
+  polyPoints: [],
+  basePoint: null
+};
+
+const estimateState = {
+  areaM2: null,
+  tileCount: null,
+  lossRate: null,
+  reuseCandidateCount: null,
+  reusePairCount: null,
+  reuseAdjustedTileCount: null
+};
+
+function fmtArea(v) {
+  return (v == null || !isFinite(v)) ? "-" : `${v.toFixed(2)}㎡`;
+}
+function fmtTileCount(v) {
+  return (v == null || !isFinite(v)) ? "-" : `${Math.ceil(v)}枚`;
+}
+function fmtLoss(v) {
+  return (v == null || !isFinite(v)) ? "-" : `${v.toFixed(1)}%`;
+}
+
+function fmtReuseCount(v) {
+  return (v == null || !isFinite(v)) ? "-" : `${Math.round(v)}件`;
+}
+
+function fmtReuseTiles(v) {
+  return (v == null || !isFinite(v)) ? "-" : `${v.toFixed(1)}枚`;
+}
 
 let mode = "idle";
 let mmPerLocalPx = 0;
@@ -742,7 +823,8 @@ let zoomHudMode = "hidden";
 let dpadMode = "grid";
 let nudgeMm = 5;
 let pointStepPx = POINT_STEP_FINE;
-let activePoint = null;
+let activePointKey = null;
+let activePointNode = null;
 let pointDragging = false;
 let suppressNextTap = false;
 let suppressTapTimer = null;
@@ -750,9 +832,11 @@ let lastSnapInfo = "";
 let dpadRepeatTimer = null;
 let dpadRepeatInterval = null;
 let baseInfoExpanded = false;
+let suppressSnapForNudge = false;
+let dpadActiveButton = null;
 
-const statusLeft = document.getElementById("statusLeft");
-const statusRight = document.getElementById("statusRight");
+const statusLeft = null;
+const statusRight = null;
 const zoomHud = document.getElementById("zoomHud");
 const leftDock = document.getElementById("leftDock");
 
@@ -772,8 +856,8 @@ function armTapSuppression(ms = TAP_SUPPRESS_MS) {
 }
 
 function setStatus(left, right) {
-  if (left != null) statusLeft.textContent = left;
-  if (right != null) statusRight.textContent = right;
+  if (left != null && statusLeft) statusLeft.textContent = left;
+  if (right != null && statusRight) statusRight.textContent = right;
 }
 
 function setBaseInfoVisible(hasBase) {
@@ -783,7 +867,7 @@ function setBaseInfoVisible(hasBase) {
 }
 
 baseSummaryToggle.addEventListener("click", () => {
-  const hasBase = !!uiLayer.findOne(".baseDot");
+  const hasBase = !!model.basePoint;
   if (!hasBase) return;
   baseInfoExpanded = !baseInfoExpanded;
   setBaseInfoVisible(true);
@@ -792,7 +876,13 @@ baseSummaryToggle.addEventListener("click", () => {
 function updateUiChips() {
   document.getElementById("chipFile").textContent = bgImage.image() ? "図面: 読込済み" : "図面: 読込前";
   document.getElementById("chipScale").textContent = mmPerLocalPx ? `縮尺: ${mmPerLocalPx.toFixed(3)} mm/px` : "縮尺: 未確定";
-  document.getElementById("chipPoly").textContent = polyShape.points().length >= 6 ? "範囲: 完了" : "範囲: 未完了";
+  document.getElementById("chipPoly").textContent = model.polyPoints.length >= 3 ? "範囲: 完了" : "範囲: 未完了";
+  document.getElementById("chipArea").textContent = `${fmtArea(estimateState.areaM2)}`;
+  document.getElementById("chipTiles").textContent = `${fmtTileCount(estimateState.tileCount)}`;
+  document.getElementById("chipLoss").textContent = `${fmtLoss(estimateState.lossRate)}`;
+  document.getElementById("chipReuseCand").textContent = `${fmtReuseCount(estimateState.reuseCandidateCount)}`;
+  document.getElementById("chipReusePair").textContent = `${fmtReuseCount(estimateState.reusePairCount)}`;
+  document.getElementById("chipReuseTiles").textContent = `${fmtReuseTiles(estimateState.reuseAdjustedTileCount)}`;
 }
 
 function lockPhoto(lock) {
@@ -828,9 +918,18 @@ function setMode(next) {
   setStatus("工程: " + label, null);
 }
 
-function getPhotoLocalPoint(stagePoint) {
-  const inv = photoGroup.getAbsoluteTransform().copy().invert();
-  return inv.point(stagePoint);
+function roundToUnit(v, unit = POSITION_ROUND_UNIT) {
+  return Math.round(v / unit) * unit;
+}
+
+function getStageSpaceThreshold(px) {
+  return px / (stageScale || 1);
+}
+
+function distance2(a, b) {
+  const dx = a.x - b.x;
+  const dy = a.y - b.y;
+  return dx * dx + dy * dy;
 }
 
 function stagePxToMmX(px) {
@@ -845,18 +944,163 @@ function stagePxToMmY(px) {
   return (px / sy) * mmPerLocalPx;
 }
 
-function roundToUnit(v, unit = POSITION_ROUND_UNIT) {
-  return Math.round(v / unit) * unit;
+function mmToStagePxX(mm){
+  if (!mmPerLocalPx) return 0;
+  const sx = photoGroup.scaleX() || 1;
+  return (mm / mmPerLocalPx) * sx;
 }
 
-function getStageSpaceThreshold(px) {
-  return px / (stageScale || 1);
+function mmToStagePxY(mm){
+  if (!mmPerLocalPx) return 0;
+  const sy = photoGroup.scaleY() || 1;
+  return (mm / mmPerLocalPx) * sy;
 }
 
-function distance2(a, b) {
-  const dx = a.x - b.x;
-  const dy = a.y - b.y;
-  return dx * dx + dy * dy;
+function stageToPhotoLocal(stagePoint) {
+  const inv = photoGroup.getTransform().copy().invert();
+  return inv.point(stagePoint);
+}
+
+function photoLocalToStage(localPoint) {
+  return photoGroup.getTransform().point(localPoint);
+}
+
+function getPointerPos(e){
+  stage.setPointersPositions(e.evt);
+  const p = stage.getPointerPosition();
+  if (!p) return null;
+  const sx = stage.scaleX() || 1;
+  const sy = stage.scaleY() || 1;
+  return { x: (p.x - stage.x()) / sx, y: (p.y - stage.y()) / sy };
+}
+
+function makePointKey(type, index) {
+  return `${type}:${index}`;
+}
+
+function parsePointKey(key) {
+  if (!key) return null;
+  const parts = String(key).split(":");
+  if (parts.length !== 2) return null;
+  return { type: parts[0], index: Number(parts[1]) };
+}
+
+function getPointArrayByType(type) {
+  if (type === "align") return model.alignPoints;
+  if (type === "scale") return model.scalePoints;
+  if (type === "poly") return model.polyPoints;
+  return null;
+}
+
+function getModelPointByKey(key) {
+  const info = parsePointKey(key);
+  if (!info) return null;
+  if (info.type === "base") return model.basePoint;
+  const arr = getPointArrayByType(info.type);
+  if (!arr) return null;
+  return arr[info.index] || null;
+}
+
+function setModelPointByKey(key, point) {
+  const info = parsePointKey(key);
+  if (!info) return;
+  if (info.type === "base") {
+    model.basePoint = { x: point.x, y: point.y };
+    return;
+  }
+  const arr = getPointArrayByType(info.type);
+  if (!arr || !arr[info.index]) return;
+  arr[info.index].x = point.x;
+  arr[info.index].y = point.y;
+}
+
+function getPolyStagePointsFlat() {
+  const pts = [];
+  model.polyPoints.forEach((p) => {
+    const s = photoLocalToStage(p);
+    pts.push(s.x, s.y);
+  });
+  return pts;
+}
+
+function getBaseStagePoint() {
+  if (!model.basePoint) return null;
+  return photoLocalToStage(model.basePoint);
+}
+
+
+function getDynamicHitRadius() {
+  return mode === "polyAdjust" ? HIT_RADIUS_POLY_ADJUST : HIT_RADIUS;
+}
+
+function polygonAreaLocalPx2(points) {
+  if (!points || points.length < 3) return 0;
+  let sum = 0;
+  for (let i = 0; i < points.length; i++) {
+    const a = points[i];
+    const b = points[(i + 1) % points.length];
+    sum += a.x * b.y - b.x * a.y;
+  }
+  return Math.abs(sum) / 2;
+}
+
+function updateEstimateFromCurrentState(fullCount = null, partialCount = null, reuseCandidateCount = null, reusePairCount = null, reuseAdjustedTileCount = null) {
+  const twMm = parseFloat(document.getElementById("tileWidthInput").value);
+  const thMm = parseFloat(document.getElementById("tileHeightInput").value);
+
+  if (!mmPerLocalPx || model.polyPoints.length < 3 || !isFinite(twMm) || !isFinite(thMm) || twMm <= 0 || thMm <= 0) {
+    estimateState.areaM2 = null;
+    estimateState.tileCount = null;
+    estimateState.lossRate = null;
+    estimateState.reuseCandidateCount = null;
+    estimateState.reusePairCount = null;
+    estimateState.reuseAdjustedTileCount = null;
+    updateUiChips();
+    return;
+  }
+
+  const areaLocalPx2 = polygonAreaLocalPx2(model.polyPoints);
+  const areaMm2 = areaLocalPx2 * mmPerLocalPx * mmPerLocalPx;
+  const areaM2 = areaMm2 / 1000000;
+  const tileAreaM2 = (twMm * thMm) / 1000000;
+  const theoryTiles = tileAreaM2 > 0 ? areaM2 / tileAreaM2 : null;
+
+  let tileCount = theoryTiles;
+  let lossRate = 0;
+
+  if (fullCount != null && partialCount != null && isFinite(fullCount) && isFinite(partialCount)) {
+    tileCount = fullCount + partialCount;
+    lossRate = (theoryTiles && theoryTiles > 0) ? Math.max(0, ((tileCount - theoryTiles) / theoryTiles) * 100) : 0;
+  }
+
+  estimateState.areaM2 = areaM2;
+  estimateState.tileCount = tileCount;
+  estimateState.lossRate = lossRate;
+  estimateState.reuseCandidateCount = reuseCandidateCount;
+  estimateState.reusePairCount = reusePairCount;
+  estimateState.reuseAdjustedTileCount = reuseAdjustedTileCount;
+  updateUiChips();
+}
+
+function pickNearestPolyDot(stagePos) {
+  const dots = uiLayer.find(".polyDot");
+  if (!dots.length) return null;
+
+  let best = null;
+  let bestD2 = Infinity;
+  dots.forEach((dot) => {
+    const dx = dot.x() - stagePos.x;
+    const dy = dot.y() - stagePos.y;
+    const d2 = dx * dx + dy * dy;
+    if (d2 < bestD2) {
+      bestD2 = d2;
+      best = dot;
+    }
+  });
+
+  const threshold = getStageSpaceThreshold(PICK_NEAR_THRESHOLD_PX);
+  if (best && bestD2 <= threshold * threshold) return best;
+  return null;
 }
 
 function updateZoom(pos) {
@@ -872,175 +1116,34 @@ function updateZoom(pos) {
 
   zoomGroup.position({ x: zX, y: zY });
 
-  const localPos = getPhotoLocalPoint(pos);
   const mag = 4.5;
 
   zoomContent.image(bgImage.image());
   zoomContent.width(bgImage.image().width);
   zoomContent.height(bgImage.image().height);
-  zoomContent.scale({ x: photoGroup.scaleX() * mag, y: photoGroup.scaleY() * mag });
-  zoomContent.rotation(photoGroup.rotation());
-  zoomContent.position({
-    x: -localPos.x * photoGroup.scaleX() * mag,
-    y: -localPos.y * photoGroup.scaleY() * mag
+
+  zoomContent.offset({
+    x: photoGroup.offsetX(),
+    y: photoGroup.offsetY()
   });
+
+  zoomContent.position({
+    x: (photoGroup.x() - pos.x) * mag,
+    y: (photoGroup.y() - pos.y) * mag
+  });
+
+  zoomContent.scale({
+    x: photoGroup.scaleX() * mag,
+    y: photoGroup.scaleY() * mag
+  });
+
+  zoomContent.rotation(photoGroup.rotation());
+
   zoomContent.clipFunc((ctx) => {
-    ctx.arc(
-      localPos.x * photoGroup.scaleX() * mag,
-      localPos.y * photoGroup.scaleY() * mag,
-      85, 0, Math.PI * 2
-    );
+    ctx.arc(0, 0, 85, 0, Math.PI * 2);
   });
 
   zoomLayer.batchDraw();
-}
-
-function destroyDots(name) {
-  uiLayer.find("." + name).forEach((d) => d.destroy());
-  uiLayer.draw();
-}
-
-function syncPoly() {
-  const dots = uiLayer.find(".polyDot");
-  const pts = [];
-  dots.forEach((d) => pts.push(d.x(), d.y()));
-  polyShape.points(pts);
-  uiLayer.batchDraw();
-  updateBaseDimsToPoly();
-  updateUiChips();
-}
-
-function setPolyDotsDraggable(on) {
-  uiLayer.find(".polyDot").forEach(d => d.draggable(!!on));
-}
-
-function snapToGrid(stagePos) {
-  if (!gridGroup.visible() || !lastTileStageW || !lastTileStageH) return stagePos;
-  const localX = stagePos.x - gridGroup.x();
-  const localY = stagePos.y - gridGroup.y();
-  const snapX = Math.round(localX / lastTileStageW) * lastTileStageW;
-  const snapY = Math.round(localY / lastTileStageH) * lastTileStageH;
-  return { x: gridGroup.x() + snapX, y: gridGroup.y() + snapY };
-}
-
-function resnapBaseDot() {
-  const base = uiLayer.findOne(".baseDot");
-  if (!base) return;
-  const s = snapToGrid({ x: base.x(), y: base.y() });
-  base.position(s);
-  uiLayer.draw();
-  updateBaseDimsToPoly();
-}
-
-function getNearbyPoints(excludeNode, classNameList = [".polyDot", ".alignDot", ".scaleDot", ".baseDot"]) {
-  const arr = [];
-  classNameList.forEach(sel => {
-    uiLayer.find(sel).forEach(n => {
-      if (n !== excludeNode) arr.push(n);
-    });
-  });
-  return arr;
-}
-
-function getPolyNeighborDots(node) {
-  const dots = uiLayer.find(".polyDot");
-  const idx = dots.indexOf(node);
-  if (idx < 0) return [];
-  const result = [];
-  if (dots[idx - 1]) result.push(dots[idx - 1]);
-  if (dots[idx + 1]) result.push(dots[idx + 1]);
-  if (dots.length > 2 && idx === 0) result.push(dots[dots.length - 1]);
-  if (dots.length > 2 && idx === dots.length - 1) result.push(dots[0]);
-  return result;
-}
-
-function applySmartSnap(node, proposedPos, dotName) {
-  let p = { x: roundToUnit(proposedPos.x), y: roundToUnit(proposedPos.y) };
-  const snapDist = getStageSpaceThreshold(SNAP_STAGE_PX);
-  const axisDist = getStageSpaceThreshold(AXIS_SNAP_STAGE_PX);
-  const gridSnapDist = getStageSpaceThreshold(GRID_SNAP_STAGE_PX);
-
-  let snapMsg = "";
-
-  if (dotName === "baseDot" && gridGroup.visible() && lastTileStageW && lastTileStageH) {
-    const g = snapToGrid(p);
-    if (Math.hypot(g.x - p.x, g.y - p.y) <= gridSnapDist * 1.5) {
-      p = g;
-      snapMsg = "基準点: グリッド交点吸着";
-    }
-  }
-
-  if (dotName === "alignDot" || dotName === "scaleDot") {
-    if (gridGroup.visible()) {
-      const g = snapToGrid(p);
-      if (Math.hypot(g.x - p.x, g.y - p.y) <= gridSnapDist) {
-        p = g;
-        snapMsg = "交点吸着";
-      }
-    }
-
-    const nearby = getNearbyPoints(node, [".alignDot", ".scaleDot", ".baseDot"]);
-    let nearest = null;
-    let nearestD2 = Infinity;
-    nearby.forEach(n => {
-      const d2 = distance2({ x: n.x(), y: n.y() }, p);
-      if (d2 < nearestD2) {
-        nearestD2 = d2;
-        nearest = n;
-      }
-    });
-    if (nearest && nearestD2 <= snapDist * snapDist) {
-      p.x = nearest.x();
-      p.y = nearest.y();
-      snapMsg = snapMsg || "近接点吸着";
-    }
-  }
-
-  if (dotName === "polyDot") {
-    if (gridGroup.visible()) {
-      const g = snapToGrid(p);
-      if (Math.hypot(g.x - p.x, g.y - p.y) <= gridSnapDist) {
-        p = g;
-        snapMsg = "交点吸着";
-      }
-    }
-
-    const neighbors = getPolyNeighborDots(node);
-    neighbors.forEach(n => {
-      if (Math.abs(p.x - n.x()) <= axisDist) {
-        p.x = n.x();
-        snapMsg = snapMsg || "縦ライン吸着";
-      }
-      if (Math.abs(p.y - n.y()) <= axisDist) {
-        p.y = n.y();
-        snapMsg = snapMsg || "横ライン吸着";
-      }
-    });
-
-    const allPoly = uiLayer.find(".polyDot");
-    const minGap = getStageSpaceThreshold(POLY_OVERLAP_MIN_PX);
-
-    for (const other of allPoly) {
-      if (other === node) continue;
-      const dx = p.x - other.x();
-      const dy = p.y - other.y();
-      const d = Math.hypot(dx, dy);
-
-      if (d < minGap) {
-        if (d < 0.0001) {
-          p.x += minGap;
-        } else {
-          const ratio = minGap / d;
-          p.x = other.x() + dx * ratio;
-          p.y = other.y() + dy * ratio;
-        }
-        snapMsg = snapMsg || "点重なり防止";
-      }
-    }
-  }
-
-  lastSnapInfo = snapMsg;
-  return p;
 }
 
 function compensateUiScale() {
@@ -1051,13 +1154,14 @@ function compensateUiScale() {
     ...uiLayer.find(".polyDot"),
     ...uiLayer.find(".baseDot")
   ];
+
   allDots.forEach((g) => {
     const hitCircle = g.findOne(".hitCircle");
     const crossH = g.findOne(".crossH");
     const crossV = g.findOne(".crossV");
     const dotCore = g.findOne(".dotCore");
 
-    if (hitCircle) hitCircle.radius(HIT_RADIUS * inv);
+    if (hitCircle) hitCircle.radius(getDynamicHitRadius() * inv);
     if (crossH) {
       crossH.points([-CROSS_HALF * inv, 0, CROSS_HALF * inv, 0]);
       crossH.strokeWidth(Math.max(1, STROKE_THIN * inv));
@@ -1088,6 +1192,165 @@ function applyStageView() {
 function resetStageView() {
   stageScale = 1;
   stagePos = { x: 0, y: 0 };
+  applyStageView();
+}
+
+function clearBaseMiniHud() {
+  zoomHud.classList.remove("base-mini");
+  leftDock.classList.remove("base-mini-mode");
+}
+
+function isRangePointMode() {
+  return dpadMode === "point" && (mode === "drawing" || mode === "polyAdjust");
+}
+
+function updatePointUiVisibility() {
+  const zoomInBtn = document.getElementById("zoomInBtn");
+  const zoomOutBtn = document.getElementById("zoomOutBtn");
+  const zoomResetBtn = document.getElementById("zoomResetBtn");
+  const dUp = document.getElementById("dUp");
+
+  if (isRangePointMode()) {
+    zoomInBtn.style.display = "none";
+    zoomOutBtn.style.display = "none";
+    zoomResetBtn.style.display = "none";
+    dUp.style.visibility = "visible";
+    dUp.style.pointerEvents = "auto";
+  } else {
+    zoomInBtn.style.display = "inline-block";
+    zoomOutBtn.style.display = "inline-block";
+    zoomResetBtn.style.display = "inline-block";
+    dUp.style.visibility = "visible";
+    dUp.style.pointerEvents = "auto";
+  }
+}
+
+
+function getPolyPointIndexFromKey(pointKey) {
+  const info = parsePointKey(pointKey);
+  if (!info || info.type !== "poly" || !isFinite(info.index)) return -1;
+  return info.index;
+}
+
+function focusPolyPointByOffset(offset) {
+  if (!(mode === "drawing" || mode === "polyAdjust")) return;
+  if (!model.polyPoints.length) return;
+
+  let idx = getPolyPointIndexFromKey(activePointKey);
+  if (idx < 0) idx = 0;
+
+  const n = model.polyPoints.length;
+  idx = (idx + offset + n) % n;
+  focusPointByKey(makePointKey("poly", idx));
+}
+
+function setBaseOnlyInteractivity() {
+  const nonBaseSelectors = [".alignDot", ".scaleDot", ".polyDot"];
+  nonBaseSelectors.forEach((sel) => {
+    uiLayer.find(sel).forEach((g) => {
+      g.listening(false);
+      g.draggable(false);
+      const hitCircle = g.findOne(".hitCircle");
+      if (hitCircle) hitCircle.listening(false);
+    });
+  });
+
+  uiLayer.find(".baseDot").forEach((g) => {
+    g.listening(true);
+    g.draggable(true);
+    const hitCircle = g.findOne(".hitCircle");
+    if (hitCircle) hitCircle.listening(true);
+  });
+
+  uiLayer.draw();
+}
+
+function showBaseMiniHud() {
+  zoomHudMode = "base";
+  zoomHud.classList.add("base-mini");
+  leftDock.classList.add("base-mini-mode");
+  zoomHud.style.display = "flex";
+  zoomHud.style.flexWrap = "nowrap";
+
+  document.getElementById("zoomInBtn").style.display = "inline-block";
+  document.getElementById("zoomOutBtn").style.display = "inline-block";
+  document.getElementById("zoomResetBtn").style.display = "inline-block";
+
+  const pointDoneBtn = document.getElementById("pointDoneBtn");
+  pointDoneBtn.style.display = "inline-block";
+  pointDoneBtn.textContent = "調整完了";
+
+  document.getElementById("pointPrevBtn").style.display = "none";
+  document.getElementById("pointNextBtn").style.display = "none";
+  document.getElementById("gridReEditBtn").style.display = "none";
+  document.getElementById("dUp").style.visibility = "visible";
+  document.getElementById("dUp").style.pointerEvents = "auto";
+}
+
+function showZoomHud(modeName) {
+  clearBaseMiniHud();
+  zoomHudMode = modeName;
+  zoomHud.style.display = "flex";
+  zoomHud.style.flexWrap = "nowrap";
+
+  const pointDoneBtn = document.getElementById("pointDoneBtn");
+  const pointPrevBtn = document.getElementById("pointPrevBtn");
+  const pointNextBtn = document.getElementById("pointNextBtn");
+  const gridReEditBtn = document.getElementById("gridReEditBtn");
+
+  if (modeName === "grid") {
+    document.getElementById("zoomInBtn").style.display = "inline-block";
+    document.getElementById("zoomOutBtn").style.display = "inline-block";
+    document.getElementById("zoomResetBtn").style.display = "inline-block";
+    document.getElementById("dUp").style.visibility = "visible";
+    document.getElementById("dUp").style.pointerEvents = "auto";
+
+    pointDoneBtn.style.display = "none";
+    pointPrevBtn.style.display = "none";
+    pointNextBtn.style.display = "none";
+    pointDoneBtn.textContent = "点完了";
+    gridReEditBtn.style.display = "inline-block";
+  } else if (modeName === "point") {
+    pointDoneBtn.style.display = "inline-block";
+    pointDoneBtn.textContent = "点完了";
+    gridReEditBtn.style.display = "none";
+
+    const showPolyCycle = !!activePointKey && (mode === "drawing" || mode === "polyAdjust") && String(activePointKey).startsWith("poly:");
+    pointPrevBtn.style.display = showPolyCycle ? "inline-block" : "none";
+    pointNextBtn.style.display = showPolyCycle ? "inline-block" : "none";
+    updatePointUiVisibility();
+  } else {
+    document.getElementById("zoomInBtn").style.display = "none";
+    document.getElementById("zoomOutBtn").style.display = "none";
+    document.getElementById("zoomResetBtn").style.display = "none";
+    document.getElementById("dUp").style.visibility = "visible";
+    document.getElementById("dUp").style.pointerEvents = "auto";
+
+    pointDoneBtn.style.display = "none";
+    pointPrevBtn.style.display = "none";
+    pointNextBtn.style.display = "none";
+    pointDoneBtn.textContent = "点完了";
+    gridReEditBtn.style.display = "none";
+  }
+}
+
+function hideZoomHud() {
+  zoomHudMode = "hidden";
+  clearBaseMiniHud();
+  zoomHud.style.display = "none";
+}
+
+function zoomAroundCenter(factor) {
+  const oldScale = stageScale;
+  let newScale = Math.max(1, Math.min(6, oldScale * factor));
+  const cx = stage.width() / 2;
+  const cy = stage.height() / 2;
+  const worldPoint = { x: (cx - stagePos.x) / oldScale, y: (cy - stagePos.y) / oldScale };
+  stageScale = newScale;
+  stagePos = {
+    x: cx - worldPoint.x * stageScale,
+    y: cy - worldPoint.y * stageScale
+  };
   applyStageView();
 }
 
@@ -1142,235 +1405,423 @@ function restoreAllPointInteractivity() {
   uiLayer.draw();
 }
 
-function clearBaseMiniHud() {
-  zoomHud.classList.remove("base-mini");
-  leftDock.classList.remove("base-mini-mode");
+function setDpadVisible(on){
+  const el = document.getElementById("dpad");
+  el.style.display = on ? "block" : "none";
+  document.getElementById("dCenter").textContent = (dpadMode === "grid") ? `${nudgeMm}mm` : `${pointStepPx}px`;
+  updatePointUiVisibility();
 }
 
-function showBaseMiniHud() {
-  zoomHudMode = "base";
-  zoomHud.classList.add("base-mini");
-  leftDock.classList.add("base-mini-mode");
-  zoomHud.style.display = "flex";
-  zoomHud.style.flexWrap = "nowrap";
-
-  document.getElementById("zoomInBtn").style.display = "inline-block";
-  document.getElementById("zoomOutBtn").style.display = "inline-block";
-  document.getElementById("zoomResetBtn").style.display = "inline-block";
-
-  const pointDoneBtn = document.getElementById("pointDoneBtn");
-  pointDoneBtn.style.display = "inline-block";
-  pointDoneBtn.textContent = "調整完了";
-
-  document.getElementById("gridReEditBtn").style.display = "none";
-}
-
-function showZoomHud(modeName) {
-  clearBaseMiniHud();
-  zoomHudMode = modeName;
-  zoomHud.style.display = "flex";
-  zoomHud.style.flexWrap = "nowrap";
-
-  const pointDoneBtn = document.getElementById("pointDoneBtn");
-  const gridReEditBtn = document.getElementById("gridReEditBtn");
-
-  document.getElementById("zoomInBtn").style.display = "inline-block";
-  document.getElementById("zoomOutBtn").style.display = "inline-block";
-  document.getElementById("zoomResetBtn").style.display = "inline-block";
-
-  if (modeName === "grid") {
-    pointDoneBtn.style.display = "none";
-    pointDoneBtn.textContent = "点調整完了";
-    gridReEditBtn.style.display = "inline-block";
-  } else if (modeName === "point") {
-    pointDoneBtn.style.display = "inline-block";
-    pointDoneBtn.textContent = "点調整完了";
-    gridReEditBtn.style.display = "none";
-  } else {
-    pointDoneBtn.style.display = "none";
-    pointDoneBtn.textContent = "点調整完了";
-    gridReEditBtn.style.display = "none";
-  }
-}
-
-function hideZoomHud() {
-  zoomHudMode = "hidden";
-  clearBaseMiniHud();
-  zoomHud.style.display = "none";
-}
-
-function zoomAroundCenter(factor) {
-  const oldScale = stageScale;
-  let newScale = Math.max(1, Math.min(6, oldScale * factor));
-  const cx = stage.width() / 2;
-  const cy = stage.height() / 2;
-  const worldPoint = { x: (cx - stagePos.x) / oldScale, y: (cy - stagePos.y) / oldScale };
-  stageScale = newScale;
-  stagePos = {
-    x: cx - worldPoint.x * stageScale,
-    y: cy - worldPoint.y * stageScale
-  };
-  applyStageView();
-}
-
-function enterPointAdjust(targetPoint) {
-  activePoint = targetPoint;
+function enterPointAdjust(targetNode) {
+  activePointNode = targetNode || null;
+  activePointKey = targetNode ? targetNode.getAttr("pointKey") : null;
   dpadMode = "point";
-  setOnlyActivePointInteractive(targetPoint);
+
+  if (activePointKey === "base:0") setBaseOnlyInteractivity();
+  else setOnlyActivePointInteractive(targetNode);
+
   setDpadVisible(true);
   showZoomHud("point");
   stage.draggable(false);
 
-  if (activePoint) {
-    activePoint.draggable(true);
-    updateZoom(activePoint.position());
+  if (targetNode) {
+    targetNode.draggable(true);
+    updateZoom(targetNode.position());
   }
 
   document.getElementById("dCenter").textContent = `${pointStepPx}px`;
 }
 
-function exitPointAdjust() {
-  activePoint = null;
-  dpadMode = "grid";
-  restoreAllPointInteractivity();
-  zoomLayer.visible(false);
-  hideZoomHud();
-  setDpadVisible(false);
-  stage.draggable(false);
-  resetStageView();
-  uiLayer.draw();
-}
-
 function updateAssistStatus() {
-  if (!lastSnapInfo) return;
+  if (!lastSnapInfo || !statusLeft) return;
   const current = statusLeft.textContent || "";
   if (current.includes("吸着")) return;
   setStatus(current + " / " + lastSnapInfo, null);
 }
 
-function createPoint(pos, color, dotName, { snapOnCreate = false, snapOnDragEnd = false } = {}) {
-  const p0 = snapOnCreate ? snapToGrid(pos) : pos;
-
-  const g = new Konva.Group({
-    x: p0.x,
-    y: p0.y,
-    draggable: true,
-    name: dotName,
-    dragDistance: DRAG_THRESHOLD_PX
-  });
-
-  g.dragBoundFunc((rawPos) => applySmartSnap(g, rawPos, dotName));
-
-  g.add(new Konva.Circle({
-    radius: HIT_RADIUS,
-    fill: "transparent",
-    listening: true,
-    name: "hitCircle"
-  }));
-
-  g.add(new Konva.Line({
-    points: [-CROSS_HALF, 0, CROSS_HALF, 0],
-    stroke: color,
-    strokeWidth: STROKE_THIN,
-    listening: false,
-    name: "crossH"
-  }));
-
-  g.add(new Konva.Line({
-    points: [0, -CROSS_HALF, 0, CROSS_HALF],
-    stroke: color,
-    strokeWidth: STROKE_THIN,
-    listening: false,
-    name: "crossV"
-  }));
-
-  g.add(new Konva.Circle({
-    radius: DOT_RADIUS,
-    fill: color,
-    stroke: "#fff",
-    strokeWidth: 1,
-    listening: false,
-    name: "dotCore"
-  }));
-
-  g.on("tap", (e) => {
-    e.cancelBubble = true;
-    if (suppressNextTap) return;
-    if (dotName === "baseDot") return;
-    if (zoomHudMode === "point" && activePoint && activePoint !== g) return;
-    enterPointAdjust(g);
-  });
-
-  g.on("touchstart mousedown", (e) => {
-    e.cancelBubble = true;
-    stage.draggable(false);
-  });
-
-  g.on("dragstart", (e) => {
-    e.cancelBubble = true;
-    pointDragging = true;
-    armTapSuppression();
-    lastSnapInfo = "";
-
-    if (dotName === "polyDot") {
-      if (activePoint !== g) enterPointAdjust(g);
-      updateZoom(g.position());
-    } else if (activePoint === g && zoomHudMode === "point") {
-      updateZoom(g.position());
+function isGridTargetNode(target){
+  if (!target) return false;
+  if (target === gridGroup) return true;
+  if (typeof target.getParent === "function") {
+    let p = target;
+    while (p) {
+      if (p === gridGroup) return true;
+      p = p.getParent ? p.getParent() : null;
     }
-  });
+  }
+  return false;
+}
 
-  g.on("dragmove", () => {
-    updateAssistStatus();
+function getNearbyStagePointsForType(type, excludeKey) {
+  const out = [];
+  if (type === "align" || type === "scale") {
+    model.alignPoints.forEach((p, i) => {
+      const key = makePointKey("align", i);
+      if (key !== excludeKey) out.push(photoLocalToStage(p));
+    });
+    model.scalePoints.forEach((p, i) => {
+      const key = makePointKey("scale", i);
+      if (key !== excludeKey) out.push(photoLocalToStage(p));
+    });
+    if (model.basePoint && excludeKey !== "base:0") out.push(photoLocalToStage(model.basePoint));
+  } else if (type === "poly") {
+    model.polyPoints.forEach((p, i) => {
+      const key = makePointKey("poly", i);
+      if (key !== excludeKey) out.push(photoLocalToStage(p));
+    });
+  }
+  return out;
+}
 
-    if (dotName === "polyDot") syncPoly();
-    if (dotName === "baseDot") updateBaseDimsToPoly();
+function getPolyNeighborStagePoints(index) {
+  const pts = [];
+  const n = model.polyPoints.length;
+  if (index < 0 || index >= n) return pts;
+  if (n >= 2) {
+    const prev = model.polyPoints[(index - 1 + n) % n];
+    const next = model.polyPoints[(index + 1) % n];
+    if (prev) pts.push(photoLocalToStage(prev));
+    if (next && n > 1) pts.push(photoLocalToStage(next));
+  }
+  return pts;
+}
 
-    if (dotName === "alignDot") {
-      const dots = uiLayer.find(".alignDot");
-      if (dots.length === 2) {
-        alignLine.points([dots[0].x(), dots[0].y(), dots[1].x(), dots[1].y()]);
-        alignLine.visible(true);
+function snapToGrid(stagePos) {
+  if (!gridGroup.visible() || !lastTileStageW || !lastTileStageH) return stagePos;
+  const localX = stagePos.x - gridGroup.x();
+  const localY = stagePos.y - gridGroup.y();
+  const snapX = Math.round(localX / lastTileStageW) * lastTileStageW;
+  const snapY = Math.round(localY / lastTileStageH) * lastTileStageH;
+  return { x: gridGroup.x() + snapX, y: gridGroup.y() + snapY };
+}
+
+function snapLocalPoint(pointKey, proposedLocal) {
+  const info = parsePointKey(pointKey);
+  if (!info) return proposedLocal;
+
+  let stagePos = photoLocalToStage(proposedLocal);
+  stagePos = { x: roundToUnit(stagePos.x), y: roundToUnit(stagePos.y) };
+
+  const snapDist = getStageSpaceThreshold(SNAP_STAGE_PX);
+  const axisDist = getStageSpaceThreshold(AXIS_SNAP_STAGE_PX);
+  const gridSnapDist = getStageSpaceThreshold(GRID_SNAP_STAGE_PX);
+
+  let snapMsg = "";
+
+  if (info.type === "base") {
+    if (gridGroup.visible() && lastTileStageW && lastTileStageH) {
+      const g = snapToGrid(stagePos);
+      if (Math.hypot(g.x - stagePos.x, g.y - stagePos.y) <= gridSnapDist * 1.5) {
+        stagePos = g;
+        snapMsg = "基準点: グリッド交点吸着";
+      }
+    }
+    lastSnapInfo = snapMsg;
+    return stageToPhotoLocal(stagePos);
+  }
+
+  if (info.type === "align" || info.type === "scale") {
+    if (gridGroup.visible()) {
+      const g = snapToGrid(stagePos);
+      if (Math.hypot(g.x - stagePos.x, g.y - stagePos.y) <= gridSnapDist) {
+        stagePos = g;
+        snapMsg = "交点吸着";
       }
     }
 
-    if (dotName === "scaleDot") {
-      const dots = uiLayer.find(".scaleDot");
-      if (dots.length === 2) {
-        scaleLine.points([dots[0].x(), dots[0].y(), dots[1].x(), dots[1].y()]);
-        scaleLine.visible(true);
+    const nearby = getNearbyStagePointsForType(info.type, pointKey);
+    let nearest = null;
+    let nearestD2 = Infinity;
+    nearby.forEach((p) => {
+      const d2 = distance2(stagePos, p);
+      if (d2 < nearestD2) {
+        nearest = p;
+        nearestD2 = d2;
+      }
+    });
+
+    if (nearest && nearestD2 <= snapDist * snapDist) {
+      stagePos = { x: nearest.x, y: nearest.y };
+      snapMsg = snapMsg || "近接点吸着";
+    }
+
+    lastSnapInfo = snapMsg;
+    return stageToPhotoLocal(stagePos);
+  }
+
+  if (info.type === "poly") {
+    if (suppressSnapForNudge) {
+      lastSnapInfo = "十字キー微調整";
+      return proposedLocal;
+    }
+
+    if (gridGroup.visible()) {
+      const g = snapToGrid(stagePos);
+      if (Math.hypot(g.x - stagePos.x, g.y - stagePos.y) <= gridSnapDist) {
+        stagePos = g;
+        snapMsg = "交点吸着";
       }
     }
 
-    if (zoomHudMode === "point" && activePoint === g) {
-      updateZoom(g.position());
+    const neighbors = getPolyNeighborStagePoints(info.index);
+    neighbors.forEach((p) => {
+      if (Math.abs(stagePos.x - p.x) <= axisDist) {
+        stagePos.x = p.x;
+        snapMsg = snapMsg || "縦ライン吸着";
+      }
+      if (Math.abs(stagePos.y - p.y) <= axisDist) {
+        stagePos.y = p.y;
+        snapMsg = snapMsg || "横ライン吸着";
+      }
+    });
+
+    const others = getNearbyStagePointsForType("poly", pointKey);
+    const minGap = getStageSpaceThreshold(POLY_OVERLAP_MIN_PX);
+
+    for (const other of others) {
+      const dx = stagePos.x - other.x;
+      const dy = stagePos.y - other.y;
+      const d = Math.hypot(dx, dy);
+      if (d < minGap) {
+        if (d < 0.0001) {
+          stagePos.x += minGap;
+        } else {
+          const ratio = minGap / d;
+          stagePos.x = other.x + dx * ratio;
+          stagePos.y = other.y + dy * ratio;
+        }
+        snapMsg = snapMsg || "点重なり防止";
+      }
     }
+
+    lastSnapInfo = snapMsg;
+    return stageToPhotoLocal(stagePos);
+  }
+
+  lastSnapInfo = snapMsg;
+  return proposedLocal;
+}
+
+function renderOverlay() {
+  uiLayer.find(".alignDot").forEach(n => n.destroy());
+  uiLayer.find(".scaleDot").forEach(n => n.destroy());
+  uiLayer.find(".polyDot").forEach(n => n.destroy());
+  uiLayer.find(".baseDot").forEach(n => n.destroy());
+
+  activePointNode = null;
+
+  function createUiDot(stagePos, color, className, pointKey) {
+    const g = new Konva.Group({
+      x: stagePos.x,
+      y: stagePos.y,
+      draggable: true,
+      name: className,
+      dragDistance: DRAG_THRESHOLD_PX
+    });
+
+    g.setAttr("pointKey", pointKey);
+
+    g.add(new Konva.Circle({
+      radius: HIT_RADIUS,
+      fill: "transparent",
+      listening: true,
+      name: "hitCircle"
+    }));
+
+    g.add(new Konva.Line({
+      points: [-CROSS_HALF, 0, CROSS_HALF, 0],
+      stroke: color,
+      strokeWidth: STROKE_THIN,
+      listening: false,
+      name: "crossH"
+    }));
+
+    g.add(new Konva.Line({
+      points: [0, -CROSS_HALF, 0, CROSS_HALF],
+      stroke: color,
+      strokeWidth: STROKE_THIN,
+      listening: false,
+      name: "crossV"
+    }));
+
+    g.add(new Konva.Circle({
+      radius: DOT_RADIUS,
+      fill: color,
+      stroke: "#fff",
+      strokeWidth: 1,
+      listening: false,
+      name: "dotCore"
+    }));
+
+    g.on("tap", (e) => {
+      e.cancelBubble = true;
+      if (suppressNextTap) return;
+      if (pointKey === "base:0") return;
+
+      if (pointKey.startsWith("poly:") && (mode === "drawing" || mode === "polyAdjust")) {
+        const pos = getPointerPos(e);
+        const nearest = pos ? pickNearestPolyDot(pos) : null;
+        enterPointAdjust(nearest || g);
+        return;
+      }
+
+      if (zoomHudMode === "point" && activePointKey && activePointKey !== pointKey) return;
+      enterPointAdjust(g);
+    });
+
+    g.on("touchstart mousedown", (e) => {
+      e.cancelBubble = true;
+      stage.draggable(false);
+    });
+
+    g.dragBoundFunc((rawPos) => {
+      const pointKey = g.getAttr("pointKey");
+
+      if (pointKey && pointKey.startsWith("poly:")) {
+        return {
+          x: roundToUnit(rawPos.x),
+          y: roundToUnit(rawPos.y)
+        };
+      }
+
+      const rawLocal = stageToPhotoLocal(rawPos);
+      const snappedLocal = snapLocalPoint(pointKey, rawLocal);
+      const snappedStage = photoLocalToStage(snappedLocal);
+      return { x: snappedStage.x, y: snappedStage.y };
+    });
+
+    g.on("dragstart", (e) => {
+      e.cancelBubble = true;
+      pointDragging = true;
+      armTapSuppression();
+      lastSnapInfo = "";
+
+      if (g.getAttr("pointKey").startsWith("poly:")) {
+        if (activePointKey !== pointKey) enterPointAdjust(g);
+        updateZoom(g.position());
+      } else if (activePointKey === pointKey && zoomHudMode === "point") {
+        updateZoom(g.position());
+      }
+    });
+
+    g.on("dragmove", () => {
+      const key = g.getAttr("pointKey");
+      const local = stageToPhotoLocal({ x: g.x(), y: g.y() });
+      setModelPointByKey(key, local);
+
+      if (key.startsWith("poly:")) {
+        polyShape.points(getPolyStagePointsFlat());
+      } else if (key.startsWith("align:")) {
+        const pts = model.alignPoints.map(p => photoLocalToStage(p));
+        if (pts.length === 2) {
+          alignLine.points([pts[0].x, pts[0].y, pts[1].x, pts[1].y]);
+          alignLine.visible(true);
+        }
+      } else if (key.startsWith("scale:")) {
+        const pts = model.scalePoints.map(p => photoLocalToStage(p));
+        if (pts.length === 2) {
+          scaleLine.points([pts[0].x, pts[0].y, pts[1].x, pts[1].y]);
+          scaleLine.visible(true);
+        }
+      }
+
+      updateAssistStatus();
+      if (key === activePointKey && zoomHudMode === "point") updateZoom(g.position());
+      updateBaseDimsToPoly();
+      uiLayer.batchDraw();
+    });
+
+    g.on("dragend", () => {
+      pointDragging = false;
+      armTapSuppression();
+
+      const key = g.getAttr("pointKey");
+      const stagePt = { x: roundToUnit(g.x()), y: roundToUnit(g.y()) };
+      const finalLocal = snapLocalPoint(key, stageToPhotoLocal(stagePt));
+      setModelPointByKey(key, finalLocal);
+      renderOverlay();
+      updateAssistStatus();
+    });
+
+    uiLayer.add(g);
+
+    if (pointKey === activePointKey) {
+      activePointNode = g;
+    }
+
+    return g;
+  }
+
+  model.alignPoints.forEach((p, i) => {
+    createUiDot(photoLocalToStage(p), "#6f42c1", "alignDot", makePointKey("align", i));
   });
 
-  g.on("dragend", () => {
-    pointDragging = false;
-    armTapSuppression();
-
-    if (snapOnDragEnd) {
-      g.position(snapToGrid({ x: g.x(), y: g.y() }));
-    } else {
-      g.position({ x: roundToUnit(g.x()), y: roundToUnit(g.y()) });
-    }
-
-    if (dotName === "polyDot") syncPoly();
-    if (dotName === "baseDot") updateBaseDimsToPoly();
-
-    if (zoomHudMode === "point" && activePoint === g) {
-      updateZoom(g.position());
-    }
-
-    updateAssistStatus();
-    uiLayer.draw();
+  model.scalePoints.forEach((p, i) => {
+    createUiDot(photoLocalToStage(p), "red", "scaleDot", makePointKey("scale", i));
   });
 
-  uiLayer.add(g);
+  model.polyPoints.forEach((p, i) => {
+    createUiDot(photoLocalToStage(p), "#fd7e14", "polyDot", makePointKey("poly", i));
+  });
+
+  if (model.basePoint) {
+    createUiDot(photoLocalToStage(model.basePoint), "#00bfff", "baseDot", "base:0");
+  }
+
+  const polyFlat = getPolyStagePointsFlat();
+  polyShape.points(polyFlat);
+
+  if (model.alignPoints.length === 2) {
+    const a = photoLocalToStage(model.alignPoints[0]);
+    const b = photoLocalToStage(model.alignPoints[1]);
+    alignLine.points([a.x, a.y, b.x, b.y]);
+    alignLine.visible(true);
+  } else {
+    alignLine.visible(false);
+  }
+
+  if (model.scalePoints.length === 2) {
+    const a = photoLocalToStage(model.scalePoints[0]);
+    const b = photoLocalToStage(model.scalePoints[1]);
+    scaleLine.points([a.x, a.y, b.x, b.y]);
+    scaleLine.visible(true);
+  } else {
+    scaleLine.visible(false);
+  }
+
   compensateUiScale();
-  return g;
+
+  if (zoomHudMode === "point" && activePointNode) {
+    if (activePointKey === "base:0") setBaseOnlyInteractivity();
+    else setOnlyActivePointInteractive(activePointNode);
+  } else if (zoomHudMode === "base") {
+    setBaseOnlyInteractivity();
+  } else {
+    restoreAllPointInteractivity();
+  }
+
+  updateBaseDimsToPoly();
+  updateEstimateFromCurrentState();
+  updateUiChips();
+  uiLayer.batchDraw();
+}
+
+function focusPointByKey(pointKey) {
+  if (!pointKey) return;
+
+  const all = [
+    ...uiLayer.find(".alignDot"),
+    ...uiLayer.find(".scaleDot"),
+    ...uiLayer.find(".polyDot"),
+    ...uiLayer.find(".baseDot")
+  ];
+
+  const node = all.find(n => n.getAttr("pointKey") === pointKey);
+  if (!node) return;
+
+  activePointKey = pointKey;
+  activePointNode = node;
+  enterPointAdjust(node);
 }
 
 function intersectionsWithHorizontalLine(poly, y0) {
@@ -1418,8 +1869,8 @@ function minGreaterThan(arr, v) {
 }
 
 function updateBaseDimsToPoly() {
-  const base = uiLayer.findOne(".baseDot");
-  const poly = polyShape.points();
+  const base = getBaseStagePoint();
+  const poly = getPolyStagePointsFlat();
 
   const baseXLmmOut = document.getElementById("baseXLmmOut");
   const baseXRmmOut = document.getElementById("baseXRmmOut");
@@ -1449,7 +1900,7 @@ function updateBaseDimsToPoly() {
     return;
   }
 
-  const bx = base.x(), by = base.y(), eps = BASE_INTERSECT_EPS;
+  const bx = base.x, by = base.y, eps = BASE_INTERSECT_EPS;
   const xs = [
     ...intersectionsWithHorizontalLine(poly, by + eps),
     ...intersectionsWithHorizontalLine(poly, by - eps)
@@ -1585,9 +2036,117 @@ function getPolyBounds(poly) {
   return { minX, minY, maxX, maxY };
 }
 
+
+function calcSafeBEstimateFromGrid(poly, gx, gy, tileStageW, tileStageH, twMm, thMm, dangerMm) {
+  if (!poly || poly.length < 6) {
+    return {
+      fullCount: 0,
+      partialCount: 0,
+      reuseCandidateCount: 0,
+      reusePairCount: 0,
+      reuseAdjustedTileCount: 0
+    };
+  }
+
+  const b = getPolyBounds(poly);
+  const iMin = Math.floor((b.minX - gx) / tileStageW) - GRID_MARGIN_TILES;
+  const iMax = Math.ceil((b.maxX - gx) / tileStageW) + GRID_MARGIN_TILES;
+  const jMin = Math.floor((b.minY - gy) / tileStageH) - GRID_MARGIN_TILES;
+  const jMax = Math.ceil((b.maxY - gy) / tileStageH) + GRID_MARGIN_TILES;
+
+  const polyObj = [];
+  for (let k = 0; k < poly.length; k += 2) polyObj.push({ x: poly[k], y: poly[k + 1] });
+
+  let fullCount = 0;
+  let partialCount = 0;
+  const horizCuts = [];
+  const vertCuts = [];
+
+  for (let i = iMin; i <= iMax; i++) {
+    for (let j = jMin; j <= jMax; j++) {
+      const tx = i * tileStageW;
+      const ty = j * tileStageH;
+      const ax = tx + gx;
+      const ay = ty + gy;
+
+      const corners = [
+        [ax, ay],
+        [ax + tileStageW, ay],
+        [ax, ay + tileStageH],
+        [ax + tileStageW, ay + tileStageH]
+      ];
+
+      const insideCount = corners.filter((c) => isPointInPoly(c[0], c[1], poly)).length;
+      if (insideCount === 0) continue;
+
+      if (insideCount >= 4) {
+        fullCount++;
+        continue;
+      }
+
+      partialCount++;
+
+      const clipped = clipPolygonToRect(polyObj, ax, ay, ax + tileStageW, ay + tileStageH);
+      const bb = (clipped && clipped.length >= 3) ? getBBoxOfPoints(clipped) : null;
+      if (!bb) continue;
+
+      const wMm = Math.abs(stagePxToMmX(Math.max(0, bb.maxX - bb.minX)));
+      const hMm = Math.abs(stagePxToMmY(Math.max(0, bb.maxY - bb.minY)));
+
+      if (!isFinite(wMm) || !isFinite(hMm) || wMm <= 0 || hMm <= 0) continue;
+      if (dangerMm > 0 && Math.min(wMm, hMm) < dangerMm) continue;
+
+      const nearFullW = wMm >= twMm * 0.92;
+      const nearFullH = hMm >= thMm * 0.92;
+      const halfW = wMm <= twMm * 0.5 + 0.01;
+      const halfH = hMm <= thMm * 0.5 + 0.01;
+
+      if (nearFullW && halfH) {
+        horizCuts.push(hMm);
+      } else if (nearFullH && halfW) {
+        vertCuts.push(wMm);
+      }
+    }
+  }
+
+  const pairToleranceMm = 8;
+
+  function pairCuts(arr) {
+    const list = arr.slice().sort((a, b) => a - b);
+    let pairs = 0;
+    const used = new Array(list.length).fill(false);
+
+    for (let i = 0; i < list.length; i++) {
+      if (used[i]) continue;
+      for (let j = i + 1; j < list.length; j++) {
+        if (used[j]) continue;
+        if (Math.abs(list[i] - list[j]) <= pairToleranceMm) {
+          used[i] = true;
+          used[j] = true;
+          pairs++;
+          break;
+        }
+      }
+    }
+    return pairs;
+  }
+
+  const reusePairCount = pairCuts(horizCuts) + pairCuts(vertCuts);
+  const reuseCandidateCount = horizCuts.length + vertCuts.length;
+  const reuseAdjustedTileCount = fullCount + partialCount - reusePairCount;
+
+  return {
+    fullCount,
+    partialCount,
+    reuseCandidateCount,
+    reusePairCount,
+    reuseAdjustedTileCount
+  };
+}
+
 function updateGrid() {
   if (!mmPerLocalPx) return;
-  const poly = polyShape.points();
+  const poly = getPolyStagePointsFlat();
   if (poly.length < 6) return;
 
   const twMm = parseFloat(document.getElementById("tileWidthInput").value);
@@ -1609,6 +2168,7 @@ function updateGrid() {
   const b = getPolyBounds(poly);
   const gx = gridGroup.x();
   const gy = gridGroup.y();
+  const safeB = calcSafeBEstimateFromGrid(poly, gx, gy, tileStageW, tileStageH, twMm, thMm, dangerMm);
 
   const iMin = Math.floor((b.minX - gx) / tileStageW) - GRID_MARGIN_TILES;
   const iMax = Math.ceil((b.maxX - gx) / tileStageW) + GRID_MARGIN_TILES;
@@ -1650,6 +2210,7 @@ function updateGrid() {
       const insideCount = corners.filter((c) => isPointInPoly(c[0], c[1], poly)).length;
       if (insideCount === 0) continue;
 
+
       let stroke = "rgba(0,123,255,0.35)";
       let fill = "rgba(0,123,255,0.08)";
 
@@ -1689,18 +2250,14 @@ function updateGrid() {
 
   mainLayer.batchDraw();
   updateBaseDimsToPoly();
+  updateEstimateFromCurrentState(safeB.fullCount, safeB.partialCount, safeB.reuseCandidateCount, safeB.reusePairCount, safeB.reuseAdjustedTileCount);
 }
 
-function mmToStagePxX(mm){
-  if (!mmPerLocalPx) return 0;
-  const sx = photoGroup.scaleX() || 1;
-  return (mm / mmPerLocalPx) * sx;
-}
-
-function mmToStagePxY(mm){
-  if (!mmPerLocalPx) return 0;
-  const sy = photoGroup.scaleY() || 1;
-  return (mm / mmPerLocalPx) * sy;
+function resnapBasePoint() {
+  if (!model.basePoint) return;
+  const s = snapToGrid(photoLocalToStage(model.basePoint));
+  model.basePoint = stageToPhotoLocal(s);
+  renderOverlay();
 }
 
 function moveGridByMm(dxMm, dyMm){
@@ -1709,54 +2266,37 @@ function moveGridByMm(dxMm, dyMm){
   const dy = mmToStagePxY(dyMm);
   gridGroup.position({ x: gridGroup.x() + dx, y: gridGroup.y() + dy });
   updateGrid();
-  resnapBaseDot();
+  resnapBasePoint();
 }
 
 function moveActivePointByScreenPx(dxPx, dyPx) {
-  if (!activePoint) return;
+  if (!activePointKey) return;
+
+  const modelPoint = getModelPointByKey(activePointKey);
+  if (!modelPoint) return;
 
   const dx = dxPx / (stageScale || 1);
   const dy = dyPx / (stageScale || 1);
 
-  let nextPos;
+  const stageNow = photoLocalToStage(modelPoint);
+  const nextStage = {
+    x: roundToUnit(stageNow.x + dx),
+    y: roundToUnit(stageNow.y + dy)
+  };
 
-  if (activePoint.hasName("polyDot")) {
-    nextPos = { x: roundToUnit(activePoint.x() + dx), y: roundToUnit(activePoint.y() + dy) };
-    lastSnapInfo = "";
-  } else {
-    nextPos = applySmartSnap(activePoint, { x: activePoint.x() + dx, y: activePoint.y() + dy }, activePoint.name());
+  suppressSnapForNudge = true;
+  const nextLocal = stageToPhotoLocal(nextStage);
+  const adjustedLocal = snapLocalPoint(activePointKey, nextLocal);
+  suppressSnapForNudge = false;
+
+  setModelPointByKey(activePointKey, adjustedLocal);
+
+  renderOverlay();
+
+  if (activePointNode && zoomHudMode === "point") {
+    updateZoom(activePointNode.position());
   }
-
-  activePoint.position(nextPos);
-
-  if (activePoint.hasName("polyDot")) syncPoly();
-  if (activePoint.hasName("baseDot")) updateBaseDimsToPoly();
-
-  if (activePoint.hasName("alignDot")) {
-    const dots = uiLayer.find(".alignDot");
-    if (dots.length === 2) {
-      alignLine.points([dots[0].x(), dots[0].y(), dots[1].x(), dots[1].y()]);
-      alignLine.visible(true);
-    }
-  }
-
-  if (activePoint.hasName("scaleDot")) {
-    const dots = uiLayer.find(".scaleDot");
-    if (dots.length === 2) {
-      scaleLine.points([dots[0].x(), dots[0].y(), dots[1].x(), dots[1].y()]);
-      scaleLine.visible(true);
-    }
-  }
-
   updateAssistStatus();
-  updateZoom(activePoint.position());
-  uiLayer.draw();
-}
-
-function setDpadVisible(on){
-  const el = document.getElementById("dpad");
-  el.style.display = on ? "block" : "none";
-  document.getElementById("dCenter").textContent = (dpadMode === "grid") ? `${nudgeMm}mm` : `${pointStepPx}px`;
 }
 
 function performDpadMove(dx, dy){
@@ -1772,19 +2312,46 @@ function clearDpadRepeat() {
 }
 
 function bindRepeatPress(el, onStep) {
-  const stop = (ev)=>{ ev.preventDefault(); ev.stopPropagation(); };
+  const stop = (ev) => {
+    if (!ev) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+  };
 
   const start = (ev) => {
     stop(ev);
+
+    if (dpadActiveButton && dpadActiveButton !== el) {
+      clearDpadRepeat();
+    }
+
+    dpadActiveButton = el;
+
+    if (el.setPointerCapture && ev.pointerId != null) {
+      try { el.setPointerCapture(ev.pointerId); } catch (e) {}
+    }
+
     clearDpadRepeat();
     onStep();
+
     dpadRepeatTimer = setTimeout(() => {
-      dpadRepeatInterval = setInterval(onStep, REPEAT_INTERVAL);
+      dpadRepeatInterval = setInterval(() => {
+        onStep();
+      }, REPEAT_INTERVAL);
     }, REPEAT_DELAY);
   };
 
   const end = (ev) => {
-    if (ev) stop(ev);
+    stop(ev);
+
+    if (el.releasePointerCapture && ev && ev.pointerId != null) {
+      try { el.releasePointerCapture(ev.pointerId); } catch (e) {}
+    }
+
+    if (dpadActiveButton === el) {
+      dpadActiveButton = null;
+    }
+
     clearDpadRepeat();
   };
 
@@ -1803,16 +2370,30 @@ function bindDpad(){
   document.getElementById("dCenter").addEventListener("pointerdown", (ev)=>{
     ev.preventDefault();
     ev.stopPropagation();
-    if (dpadMode === "grid") nudgeMm = (nudgeMm === 5) ? 10 : 5;
-    else pointStepPx = (pointStepPx === POINT_STEP_FINE) ? POINT_STEP_COARSE : POINT_STEP_FINE;
+    if (dpadMode === "grid") {
+      nudgeMm = (nudgeMm === 5) ? 10 : 5;
+    } else {
+      if (pointStepPx === 0.5) pointStepPx = 1;
+      else if (pointStepPx === 1) pointStepPx = 2;
+      else pointStepPx = 0.5;
+    }
     setDpadVisible(true);
   }, { passive: false });
 }
 bindDpad();
 
+window.addEventListener("pointerup", clearDpadRepeat, { passive: true });
+window.addEventListener("pointercancel", clearDpadRepeat, { passive: true });
+window.addEventListener("touchend", clearDpadRepeat, { passive: true });
+window.addEventListener("touchcancel", clearDpadRepeat, { passive: true });
+window.addEventListener("blur", clearDpadRepeat);
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) clearDpadRepeat();
+});
+
 function scoreGridAtPosition(gx, gy){
   if (!mmPerLocalPx) return null;
-  const poly = polyShape.points();
+  const poly = getPolyStagePointsFlat();
   if (poly.length < 6) return null;
 
   const twMm = parseFloat(document.getElementById("tileWidthInput").value);
@@ -1878,7 +2459,7 @@ function modPositive(a, m){
 async function optimizeGrid(){
   if (!gridGroup.visible()) { alert("先にグリッドを生成してください。"); return; }
   if (!mmPerLocalPx) { alert("先に縮尺合わせを完了してください。"); return; }
-  if (polyShape.points().length < 6) { alert("先に施工範囲（ポリゴン）を完了してください。"); return; }
+  if (model.polyPoints.length < 3) { alert("先に施工範囲（ポリゴン）を完了してください。"); return; }
 
   setStatus("最適割付：探索中…", null);
 
@@ -1947,8 +2528,17 @@ async function optimizeGrid(){
 
   gridGroup.position({ x: bestFine.gx, y: bestFine.gy });
   updateGrid();
-  resnapBaseDot();
+  resnapBasePoint();
   setStatus(`最適割付：完了（危険=${bestFine.danger} / 欠け=${bestFine.partial}）`, null);
+}
+
+function resetModel() {
+  model.alignPoints = [];
+  model.scalePoints = [];
+  model.polyPoints = [];
+  model.basePoint = null;
+  activePointKey = null;
+  activePointNode = null;
 }
 
 document.getElementById("fileInput").onchange = async (e) => {
@@ -2004,7 +2594,6 @@ function setupImage(source) {
   lastTileStageW = 0;
   lastTileStageH = 0;
   gridConfirmed = false;
-  activePoint = null;
   pointDragging = false;
   suppressNextTap = false;
   if (suppressTapTimer) clearTimeout(suppressTapTimer);
@@ -2015,13 +2604,19 @@ function setupImage(source) {
   stage.draggable(false);
   hideZoomHud();
   resetStageView();
-  lockPhoto(false);
+  
+document.getElementById("pointPrevBtn").addEventListener("click", () => {
+  focusPolyPointByOffset(-1);
+});
+
+document.getElementById("pointNextBtn").addEventListener("click", () => {
+  focusPolyPointByOffset(1);
+});
+
+lockPhoto(false);
   setMode("idle");
 
-  destroyDots("alignDot");
-  destroyDots("scaleDot");
-  destroyDots("polyDot");
-  destroyDots("baseDot");
+  resetModel();
 
   polyShape.points([]);
   alignLine.visible(false);
@@ -2039,11 +2634,17 @@ function setupImage(source) {
   document.getElementById("polyEditBtn").style.display = "block";
 
   baseInfoExpanded = false;
+  estimateState.areaM2 = null;
+  estimateState.tileCount = null;
+  estimateState.lossRate = null;
+  estimateState.reuseCandidateCount = null;
+  estimateState.reusePairCount = null;
+  estimateState.reuseAdjustedTileCount = null;
   setBaseInfoVisible(false);
 
   setDpadVisible(false);
+  renderOverlay();
   mainLayer.draw();
-  uiLayer.draw();
   setStatus("図面読み込み完了", "X左: -\nX右: -\nY上: -\nY下: -");
   updateUiChips();
 }
@@ -2051,8 +2652,8 @@ function setupImage(source) {
 document.getElementById("alignBtn").onclick = () => {
   if (!bgImage.image()) return;
   setMode("aligning");
-  destroyDots("alignDot");
-  alignLine.visible(false);
+  model.alignPoints = [];
+  renderOverlay();
   lockPhoto(false);
   document.getElementById("alignInputArea").style.display = "block";
   showZoomHud("point");
@@ -2063,45 +2664,46 @@ document.getElementById("alignBtn").onclick = () => {
 };
 
 document.getElementById("applyAlignBtn").onclick = () => {
-  const dots = uiLayer.find(".alignDot");
-  if (dots.length < 2) return;
+  if (model.alignPoints.length < 2) return;
 
-  const dx = dots[1].x() - dots[0].x();
-  const dy = dots[1].y() - dots[0].y();
+  const a = photoLocalToStage(model.alignPoints[0]);
+  const b = photoLocalToStage(model.alignPoints[1]);
+
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
   let angle = (Math.atan2(dy, dx) * 180) / Math.PI;
   if (angle > 90) angle -= 180;
   if (angle < -90) angle += 180;
 
   const centerStage = { x: stage.width() / 2, y: stage.height() / 2 };
-  const centerLocal = getPhotoLocalPoint(centerStage);
+  const centerLocal = stageToPhotoLocal(centerStage);
 
   photoGroup.offset(centerLocal);
   photoGroup.position(centerStage);
   photoGroup.rotation(photoGroup.rotation() - angle);
 
-  destroyDots("alignDot");
-  alignLine.visible(false);
+  model.alignPoints = [];
   document.getElementById("alignInputArea").style.display = "none";
 
   setMode("idle");
-  activePoint = null;
+  activePointKey = null;
+  activePointNode = null;
   zoomLayer.visible(false);
   hideZoomHud();
   setDpadVisible(false);
   stage.draggable(false);
   resetStageView();
 
-  mainLayer.draw();
-  uiLayer.draw();
   if (gridGroup.visible()) updateGrid();
-  updateBaseDimsToPoly();
+  renderOverlay();
+  mainLayer.draw();
 };
 
 document.getElementById("measureBtn").onclick = () => {
   if (!bgImage.image()) return;
   setMode("measuring");
-  destroyDots("scaleDot");
-  scaleLine.visible(false);
+  model.scalePoints = [];
+  renderOverlay();
   lockPhoto(false);
   document.getElementById("measureInputArea").style.display = "block";
   showZoomHud("point");
@@ -2112,25 +2714,24 @@ document.getElementById("measureBtn").onclick = () => {
 };
 
 document.getElementById("applyScaleBtn").onclick = () => {
-  const dots = uiLayer.find(".scaleDot");
-  if (dots.length < 2) return;
+  if (model.scalePoints.length < 2) return;
 
   const realMm = parseFloat(document.getElementById("realDistInput").value);
   if (!isFinite(realMm) || realMm <= 0) return;
 
-  const p0 = getPhotoLocalPoint({ x: dots[0].x(), y: dots[0].y() });
-  const p1 = getPhotoLocalPoint({ x: dots[1].x(), y: dots[1].y() });
+  const p0 = model.scalePoints[0];
+  const p1 = model.scalePoints[1];
   const distLocalPx = Math.hypot(p1.x - p0.x, p1.y - p0.y);
   if (distLocalPx <= 0.00001) return;
 
   mmPerLocalPx = realMm / distLocalPx;
 
-  destroyDots("scaleDot");
-  scaleLine.visible(false);
+  model.scalePoints = [];
   document.getElementById("measureInputArea").style.display = "none";
   setMode("idle");
   setStatus(`縮尺確定：${mmPerLocalPx.toFixed(4)} mm/px(図面)`, null);
-  activePoint = null;
+  activePointKey = null;
+  activePointNode = null;
   zoomLayer.visible(false);
   hideZoomHud();
   setDpadVisible(false);
@@ -2138,7 +2739,7 @@ document.getElementById("applyScaleBtn").onclick = () => {
   resetStageView();
 
   if (gridGroup.visible()) updateGrid();
-  updateBaseDimsToPoly();
+  renderOverlay();
   updateUiChips();
 };
 
@@ -2148,8 +2749,6 @@ document.getElementById("polyBtn").onclick = () => {
   lockPhoto(true);
   gridGroup.visible(false);
   gridGroup.draggable(false);
-  setPolyDotsDraggable(true);
-  restoreAllPointInteractivity();
   document.getElementById("polyControls").style.display = "block";
   document.getElementById("polyEditDoneBtn").style.display = "none";
   document.getElementById("polyEditBtn").style.display = "block";
@@ -2158,48 +2757,46 @@ document.getElementById("polyBtn").onclick = () => {
   setDpadVisible(true);
   stage.draggable(false);
   resetStageView();
+  renderOverlay();
   mainLayer.draw();
-  uiLayer.draw();
 };
 
 document.getElementById("undoBtn").onclick = () => {
-  const ds = uiLayer.find(".polyDot");
-  if (ds.length > 0) {
-    ds[ds.length - 1].destroy();
-    syncPoly();
-    compensateUiScale();
+  if (model.polyPoints.length > 0) {
+    model.polyPoints.pop();
+    activePointKey = null;
+    activePointNode = null;
+    zoomLayer.visible(false);
+    hideZoomHud();
+    setDpadVisible(false);
+    resetStageView();
+    renderOverlay();
   }
 };
 
 document.getElementById("closePolyBtn").onclick = () => {
   document.getElementById("polyControls").style.display = "none";
   setMode("idle");
-  setPolyDotsDraggable(false);
-  restoreAllPointInteractivity();
   setStatus("施工範囲確定（範囲ロック）", null);
-  activePoint = null;
+  activePointKey = null;
+  activePointNode = null;
   zoomLayer.visible(false);
   hideZoomHud();
   setDpadVisible(false);
   stage.draggable(false);
   resetStageView();
-  uiLayer.draw();
-  updateBaseDimsToPoly();
-  updateUiChips();
+  renderOverlay();
   if (gridGroup.visible()) updateGrid();
 };
 
 document.getElementById("polyEditBtn").onclick = () => {
-  const poly = polyShape.points();
-  if (poly.length < 6) {
+  if (model.polyPoints.length < 3) {
     alert("先に施工範囲を完了してください。");
     return;
   }
 
   setMode("polyAdjust");
   lockPhoto(true);
-  setPolyDotsDraggable(true);
-  restoreAllPointInteractivity();
   showZoomHud("point");
   dpadMode = "point";
   setDpadVisible(true);
@@ -2208,31 +2805,28 @@ document.getElementById("polyEditBtn").onclick = () => {
   document.getElementById("polyEditBtn").style.display = "none";
   document.getElementById("polyEditDoneBtn").style.display = "block";
   setStatus("範囲調整中：点ドラッグ → 調整完了でロック", null);
-  uiLayer.draw();
+  renderOverlay();
 };
 
 document.getElementById("polyEditDoneBtn").onclick = () => {
   setMode("idle");
-  setPolyDotsDraggable(false);
-  restoreAllPointInteractivity();
   document.getElementById("polyEditDoneBtn").style.display = "none";
   document.getElementById("polyEditBtn").style.display = "block";
   setStatus("範囲調整完了（範囲ロック）", null);
-  activePoint = null;
+  activePointKey = null;
+  activePointNode = null;
   zoomLayer.visible(false);
   hideZoomHud();
   setDpadVisible(false);
   stage.draggable(false);
   resetStageView();
-  uiLayer.draw();
+  renderOverlay();
   if (gridGroup.visible()) updateGrid();
-  updateBaseDimsToPoly();
-  updateUiChips();
 };
 
 document.getElementById("showGridBtn").onclick = () => {
   if (!mmPerLocalPx) { alert("先に縮尺合わせを完了してください。"); return; }
-  if (polyShape.points().length < 6) { alert("先に施工範囲（ポリゴン）を完了してください。"); return; }
+  if (model.polyPoints.length < 3) { alert("先に施工範囲（ポリゴン）を完了してください。"); return; }
 
   gridConfirmed = false;
   stage.draggable(false);
@@ -2260,10 +2854,10 @@ document.getElementById("confirmGridBtn").onclick = () => {
   setMode("idle");
   gridGroup.draggable(false);
   lockPhoto(true);
-  setPolyDotsDraggable(false);
-  resnapBaseDot();
+  resnapBasePoint();
   setStatus("グリッド確定（固定）→ 左下の ＋ / － / 戻す で表示調整", null);
   setDpadVisible(false);
+  renderOverlay();
   mainLayer.draw();
 };
 
@@ -2277,21 +2871,34 @@ document.getElementById("pointDoneBtn").onclick = () => {
     zoomLayer.visible(false);
     hideZoomHud();
     setDpadVisible(false);
-    activePoint = null;
+    activePointKey = null;
+    activePointNode = null;
     stage.draggable(false);
     resetStageView();
-    setStatus("基準点調整完了", null);
+    setStatus("基準点完了", null);
+    renderOverlay();
     return;
   }
 
-  exitPointAdjust();
-  if (mode !== "idle") {
-    showZoomHud("point");
-    dpadMode = "point";
-    setDpadVisible(true);
-  }
-  stage.draggable(false);
+  activePointKey = null;
+  activePointNode = null;
   zoomLayer.visible(false);
+  hideZoomHud();
+  setDpadVisible(false);
+  stage.draggable(false);
+  resetStageView();
+
+  if (mode === "drawing") {
+    setStatus("施工範囲指定（点追加/ドラッグ）", null);
+  } else if (mode === "polyAdjust") {
+    setStatus("範囲調整中：点ドラッグ → 調整完了でロック", null);
+  } else if (mode === "aligning") {
+    setStatus("工程: 水平合わせ（2点）", null);
+  } else if (mode === "measuring") {
+    setStatus("工程: 縮尺合わせ（2点）", null);
+  }
+
+  renderOverlay();
 };
 
 document.getElementById("gridReEditBtn").onclick = () => {
@@ -2320,7 +2927,7 @@ document.getElementById("tileHeightInput").addEventListener("change", () => { if
 
 document.getElementById("basePointBtn").onclick = () => {
   if (!gridGroup.visible()) { alert("先にグリッドを生成してください。"); return; }
-  if (polyShape.points().length < 6) { alert("先に施工範囲（ポリゴン）を完了してください。"); return; }
+  if (model.polyPoints.length < 3) { alert("先に施工範囲（ポリゴン）を完了してください。"); return; }
 
   setMode("settingBase");
   lockPhoto(true);
@@ -2329,34 +2936,21 @@ document.getElementById("basePointBtn").onclick = () => {
   setDpadVisible(false);
   setStatus("基準点をタップ（交点スナップ）→ 下に寸法要約が出ます", null);
   showBaseMiniHud();
-};
 
-function getPointerPos(e){
-  stage.setPointersPositions(e.evt);
-  const p = stage.getPointerPosition();
-  if (!p) return null;
-  const sx = stage.scaleX() || 1;
-  const sy = stage.scaleY() || 1;
-  return { x: (p.x - stage.x()) / sx, y: (p.y - stage.y()) / sy };
-}
-
-function isGridTargetNode(target){
-  if (!target) return false;
-  if (target === gridGroup) return true;
-  if (typeof target.getParent === "function") {
-    let p = target;
-    while (p) {
-      if (p === gridGroup) return true;
-      p = p.getParent ? p.getParent() : null;
-    }
+  if (model.basePoint) {
+    renderOverlay();
+    focusPointByKey("base:0");
+    showBaseMiniHud();
+  } else {
+    renderOverlay();
+    setBaseOnlyInteractivity();
   }
-  return false;
-}
+};
 
 stage.on("pointerdown", (e) => {
   if (mode === "idle") return;
   if (pointDragging) return;
-  if (zoomHudMode === "point" && activePoint) return;
+  if (zoomHudMode === "point" && activePointKey) return;
 
   const layer = e.target && e.target.getLayer && e.target.getLayer();
   if (layer === uiLayer || layer === zoomLayer) return;
@@ -2372,42 +2966,39 @@ stage.on("pointerdown", (e) => {
   if (!pos) return;
 
   if (mode === "aligning") {
-    if (uiLayer.find(".alignDot").length < 2) {
-      createPoint(pos, "#6f42c1", "alignDot");
+    if (model.alignPoints.length < 2) {
+      model.alignPoints.push(stageToPhotoLocal(pos));
       armTapSuppression();
-      const dots = uiLayer.find(".alignDot");
-      if (dots.length === 2) {
-        alignLine.points([dots[0].x(), dots[0].y(), dots[1].x(), dots[1].y()]);
-        alignLine.visible(true);
-      }
-      uiLayer.draw();
+      renderOverlay();
     }
   } else if (mode === "measuring") {
-    if (uiLayer.find(".scaleDot").length < 2) {
-      createPoint(pos, "red", "scaleDot");
+    if (model.scalePoints.length < 2) {
+      model.scalePoints.push(stageToPhotoLocal(pos));
       armTapSuppression();
-      const dots = uiLayer.find(".scaleDot");
-      if (dots.length === 2) {
-        scaleLine.points([dots[0].x(), dots[0].y(), dots[1].x(), dots[1].y()]);
-        scaleLine.visible(true);
-      }
-      uiLayer.draw();
+      renderOverlay();
     }
   } else if (mode === "drawing") {
-    createPoint(pos, "#fd7e14", "polyDot");
+    model.polyPoints.push(stageToPhotoLocal(pos));
     armTapSuppression();
-    syncPoly();
-    uiLayer.draw();
+    renderOverlay();
+
+    const newKey = makePointKey("poly", model.polyPoints.length - 1);
+    focusPointByKey(newKey);
+  } else if (mode === "polyAdjust") {
+    const nearest = pickNearestPolyDot(pos);
+    if (nearest) {
+      armTapSuppression();
+      enterPointAdjust(nearest);
+    }
   } else if (mode === "settingBase") {
-    destroyDots("baseDot");
     const snappedPos = snapToGrid(pos);
-    createPoint(snappedPos, "#00bfff", "baseDot", { snapOnCreate: false, snapOnDragEnd: true });
+    model.basePoint = stageToPhotoLocal(snappedPos);
     armTapSuppression();
     baseInfoExpanded = false;
-    activePoint = null;
+    activePointKey = null;
+    activePointNode = null;
     setMode("idle");
-    uiLayer.draw();
-    updateBaseDimsToPoly();
+    renderOverlay();
     setStatus("基準点 設置完了（要約表示）", null);
     zoomLayer.visible(false);
     setDpadVisible(false);
@@ -2417,17 +3008,20 @@ stage.on("pointerdown", (e) => {
   }
 });
 
+gridGroup.on("dragmove", () => {
+  updateGrid();
+  updateBaseDimsToPoly();
+});
+
 document.getElementById("saveImageBtn").onclick = () => {
   const dpad = document.getElementById("dpad");
   const hud = document.getElementById("zoomHud");
   const topBar = document.getElementById("topBar");
   const bottomBar = document.getElementById("bottomBar");
-  const statusBar = document.getElementById("statusBar");
   const menuSheet = document.getElementById("menuSheet");
 
   topBar.style.display = "none";
   bottomBar.style.display = "none";
-  statusBar.style.display = "none";
   menuSheet.style.display = "none";
   dpad.style.display = "none";
   hud.style.display = "none";
@@ -2440,7 +3034,6 @@ document.getElementById("saveImageBtn").onclick = () => {
 
     topBar.style.display = "flex";
     bottomBar.style.display = "flex";
-    statusBar.style.display = "flex";
     if (!gridConfirmed && gridGroup.visible() && dpadMode === "grid") dpad.style.display = "block";
     if (zoomHudMode !== "hidden") hud.style.display = "flex";
   }, 120);
@@ -2449,15 +3042,43 @@ document.getElementById("saveImageBtn").onclick = () => {
 window.addEventListener("resize", () => {
   stage.width(window.innerWidth);
   stage.height(window.innerHeight);
-  mainLayer.draw();
-  uiLayer.draw();
-  zoomLayer.draw();
+
+  if (bgImage.image()) {
+    const topReserve = 132;
+    const bottomReserve = 176;
+    const source = bgImage.image();
+
+    const usableW = stage.width();
+    const usableH = Math.max(120, stage.height() - topReserve - bottomReserve);
+    const sc = Math.min(usableW / source.width, usableH / source.height);
+
+    const fittedW = source.width * sc;
+    const fittedH = source.height * sc;
+
+    const offsetX = (stage.width() - fittedW) / 2;
+    const offsetY = topReserve + (usableH - fittedH) / 2 - 4;
+
+    if (photoGroup.offsetX() || photoGroup.offsetY()) {
+      const centerStage = { x: stage.width() / 2, y: stage.height() / 2 };
+      const centerLocal = photoGroup.offset();
+      photoGroup.scale({ x: sc, y: sc });
+      photoGroup.position(centerStage);
+      photoGroup.offset(centerLocal);
+    } else {
+      photoGroup.scale({ x: sc, y: sc });
+      photoGroup.position({ x: offsetX, y: offsetY });
+    }
+  }
+
   if (gridGroup.visible()) {
     updateGrid();
-    resnapBaseDot();
+    resnapBasePoint();
   }
-  updateBaseDimsToPoly();
+
+  renderOverlay();
   applyStageView();
+  mainLayer.draw();
+  zoomLayer.draw();
 });
 
 document.addEventListener("gesturestart", (e) => e.preventDefault(), { passive: false });
@@ -2472,6 +3093,8 @@ document.addEventListener("dragstart", (e) => {
 
 const menuBtn = document.getElementById("menuBtn");
 const menuSheet = document.getElementById("menuSheet");
+const estimateToggleBtn = document.getElementById("estimateToggleBtn");
+const estimatePanel = document.getElementById("estimatePanel");
 const stepTabs = document.querySelectorAll(".stepTab");
 const sectionMap = {
   align: document.getElementById("sectionAlign"),
@@ -2479,6 +3102,19 @@ const sectionMap = {
   poly: document.getElementById("sectionPoly"),
   grid: document.getElementById("sectionGrid")
 };
+
+
+function setEstimatePanelOpen(open) {
+  estimatePanel.style.display = open ? "block" : "none";
+  estimateToggleBtn.classList.toggle("active", !!open);
+}
+
+estimateToggleBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  const next = estimatePanel.style.display !== "block";
+  setEstimatePanelOpen(next);
+  menuSheet.style.display = "none";
+});
 
 function setActiveSection(name){
   Object.entries(sectionMap).forEach(([key, el]) => {
@@ -2498,12 +3134,16 @@ stepTabs.forEach(btn => {
 
 menuBtn.addEventListener("click", (e) => {
   e.stopPropagation();
+  setEstimatePanelOpen(false);
   menuSheet.style.display = menuSheet.style.display === "flex" ? "none" : "flex";
 });
 
 document.addEventListener("click", (e) => {
   if (!menuSheet.contains(e.target) && e.target !== menuBtn) {
     menuSheet.style.display = "none";
+  }
+  if (!estimatePanel.contains(e.target) && e.target !== estimateToggleBtn) {
+    setEstimatePanelOpen(false);
   }
 });
 
@@ -2528,8 +3168,10 @@ setStatus("図面を読み込んで開始", "X左: -\nX右: -\nY上: -\nY下: -"
 setDpadVisible(false);
 hideZoomHud();
 setActiveSection("align");
+setEstimatePanelOpen(false);
 setBaseInfoVisible(false);
 updateUiChips();
+renderOverlay();
 </script>
 </body>
 </html>
