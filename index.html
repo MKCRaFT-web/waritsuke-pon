@@ -2,206 +2,267 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>割付ポンっ | ポータル</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>割付ポンっ</title>
   <style>
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
+    :root{
+      --bg1:#151922;
+      --bg2:#0d1015;
+      --glass:rgba(255,255,255,0.08);
+      --line:rgba(255,255,255,0.10);
+      --text:#ffffff;
+      --muted:rgba(255,255,255,0.76);
+      --safe-top: env(safe-area-inset-top);
+      --safe-bottom: env(safe-area-inset-bottom);
+      --shadow:0 14px 36px rgba(0,0,0,0.28);
     }
 
-    html, body {
-      margin: 0;
-      padding: 0;
+    *{
+      box-sizing:border-box;
+      -webkit-tap-highlight-color:transparent;
     }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+    html,body{
+      margin:0;
+      padding:0;
+      min-height:100%;
+      color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Hiragino Sans","Noto Sans JP",sans-serif;
       background:
-        radial-gradient(circle at top, rgba(0,123,255,0.10), transparent 28%),
-        linear-gradient(180deg, #1f1f1f 0%, #111111 100%);
-      color: #ffffff;
-      min-height: 100vh;
+        radial-gradient(circle at top right, rgba(10,132,255,0.14), transparent 28%),
+        radial-gradient(circle at top left, rgba(139,92,246,0.10), transparent 22%),
+        linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 100%);
+    }
+
+    body{
       padding:
-        max(20px, env(safe-area-inset-top))
+        calc(18px + var(--safe-top))
         16px
-        calc(28px + env(safe-area-inset-bottom));
+        calc(26px + var(--safe-bottom));
     }
 
-    .wrap {
-      width: 100%;
-      max-width: 720px;
-      margin: 0 auto;
+    .wrap{
+      max-width:780px;
+      margin:0 auto;
     }
 
-    .hero {
-      text-align: center;
-      padding: 30px 18px 18px;
+    .hero{
+      text-align:center;
+      padding:18px 8px 22px;
     }
 
-    .logo {
-      font-size: 36px;
-      font-weight: 900;
-      letter-spacing: 0.03em;
-      line-height: 1.15;
-      margin-bottom: 10px;
+    .hero h1{
+      margin:0 0 14px;
+      font-size:clamp(34px, 8vw, 60px);
+      line-height:1.05;
+      letter-spacing:0.02em;
+      font-weight:900;
     }
 
-    .hero-title {
-      font-size: 18px;
-      font-weight: 800;
-      color: rgba(255, 255, 255, 0.96);
-      margin-bottom: 10px;
-      line-height: 1.45;
+    .hero .sub{
+      margin:0;
+      font-size:clamp(18px, 4.8vw, 28px);
+      line-height:1.45;
+      font-weight:800;
     }
 
-    .sub {
-      font-size: 14px;
-      line-height: 1.7;
-      color: rgba(255, 255, 255, 0.82);
+    .hero .desc{
+      margin:26px 0 0;
+      font-size:clamp(15px, 3.8vw, 20px);
+      color:var(--muted);
+      line-height:1.7;
     }
 
-    .panel {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 22px;
-      padding: 18px;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+    .panel{
+      border-radius:32px;
+      padding:18px;
+      background:rgba(255,255,255,0.06);
+      border:1px solid rgba(255,255,255,0.10);
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(18px) saturate(1.1);
+      -webkit-backdrop-filter:blur(18px) saturate(1.1);
     }
 
-    .grid {
-      display: grid;
-      gap: 14px;
-      margin-top: 4px;
+    .card{
+      position:relative;
+      display:flex;
+      align-items:center;
+      gap:18px;
+      text-decoration:none;
+      color:inherit;
+      border-radius:26px;
+      padding:22px 20px 22px 26px;
+      margin:0;
+      background:rgba(255,255,255,0.08);
+      border:1px solid rgba(255,255,255,0.08);
+      overflow:hidden;
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,0.03);
     }
 
-    .card {
-      position: relative;
-      display: block;
-      text-decoration: none;
-      color: #ffffff;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.10);
-      border-radius: 18px;
-      padding: 18px 52px 18px 16px;
-      transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
-      overflow: hidden;
+    .card + .card{
+      margin-top:18px;
     }
 
-    .card:active {
-      transform: scale(0.985);
-      background: rgba(255, 255, 255, 0.11);
+    .card::before{
+      content:"";
+      position:absolute;
+      left:0;
+      top:0;
+      bottom:0;
+      width:14px;
+      border-radius:26px 0 0 26px;
+      background:var(--accent);
     }
 
-    .card::after {
-      content: "›";
-      position: absolute;
-      right: 16px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 28px;
-      line-height: 1;
-      color: rgba(255, 255, 255, 0.45);
-      font-weight: 500;
+    .card-body{
+      min-width:0;
+      flex:1;
     }
 
-    .card-title {
-      font-size: 20px;
-      font-weight: 800;
-      margin-bottom: 6px;
-      line-height: 1.35;
+    .card h2{
+      margin:0 0 12px;
+      font-size:clamp(22px, 6vw, 34px);
+      line-height:1.15;
+      font-weight:900;
+      letter-spacing:0.01em;
     }
 
-    .card-desc {
-      font-size: 13px;
-      line-height: 1.7;
-      color: rgba(255, 255, 255, 0.82);
+    .card p{
+      margin:0;
+      font-size:clamp(15px, 4.2vw, 20px);
+      line-height:1.7;
+      color:var(--muted);
     }
 
-    .stable {
-      border-left: 6px solid #28a745;
+    .arrow{
+      flex:0 0 auto;
+      font-size:56px;
+      line-height:1;
+      color:rgba(255,255,255,0.56);
+      transform:translateY(-2px);
     }
 
-    .beta {
-      border-left: 6px solid #fd7e14;
+    .stable{ --accent:#2dc653; }
+    .beta{ --accent:#ff8c1a; }
+    .manual{ --accent:#1677ff; }
+
+    .beta-note{
+      margin-top:14px;
+      padding:12px 14px;
+      border-radius:16px;
+      background:rgba(255,255,255,0.06);
+      border:1px solid rgba(255,255,255,0.08);
     }
 
-    .manual {
-      border-left: 6px solid #007bff;
+    .beta-note-title{
+      margin:0 0 8px;
+      font-size:13px;
+      font-weight:800;
+      color:rgba(255,255,255,0.95);
+      letter-spacing:0.02em;
     }
 
-    .note {
-      margin-top: 18px;
-      font-size: 12px;
-      line-height: 1.7;
-      text-align: center;
-      color: rgba(255, 255, 255, 0.68);
+    .beta-note ul{
+      margin:0;
+      padding-left:18px;
     }
 
-    .footer {
-      margin-top: 24px;
-      text-align: center;
-      font-size: 12px;
-      letter-spacing: 0.08em;
-      color: rgba(255, 255, 255, 0.55);
+    .beta-note li{
+      color:rgba(255,255,255,0.80);
+      font-size:13px;
+      line-height:1.55;
     }
 
-    @media (min-width: 700px) {
-      .grid {
-        grid-template-columns: 1fr 1fr;
+    .beta-note li + li{
+      margin-top:4px;
+    }
+
+    .footnote{
+      margin:18px 8px 2px;
+      text-align:center;
+      color:rgba(255,255,255,0.72);
+      font-size:13px;
+      line-height:1.8;
+    }
+
+    .brand{
+      margin:44px 0 6px;
+      text-align:center;
+      color:rgba(255,255,255,0.72);
+      font-size:19px;
+      letter-spacing:0.12em;
+    }
+
+    @media (max-width: 480px){
+      .panel{
+        padding:14px;
+        border-radius:26px;
       }
 
-      .manual-wide {
-        grid-column: 1 / -1;
+      .card{
+        gap:12px;
+        padding:18px 16px 18px 20px;
+        border-radius:22px;
+      }
+
+      .card::before{
+        width:12px;
+        border-radius:22px 0 0 22px;
+      }
+
+      .arrow{
+        font-size:40px;
       }
     }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="hero">
-      <div class="logo">割付ポンっ</div>
-      <div class="hero-title">安定版・Beta版・マニュアル</div>
-      <div class="sub">
-        用途に合わせて選んでください。
-      </div>
-    </div>
+    <header class="hero">
+      <h1>割付ポンっ</h1>
+      <p class="sub">安定版・Beta版・マニュアル</p>
+      <p class="desc">用途に合わせて選んでください。</p>
+    </header>
 
-    <div class="panel">
-      <div class="grid">
-        <a class="card stable" href="./stable/index.html">
-          <div class="card-title">安定版</div>
-          <div class="card-desc">
-            普段使い向け。動作確認済みの安定したバージョンを開きます。
+    <main class="panel">
+      <a class="card stable" href="./stable/">
+        <div class="card-body">
+          <h2>安定版</h2>
+          <p>普段使い向け。動作確認済みの安定したバージョンを開きます。</p>
+        </div>
+        <div class="arrow">›</div>
+      </a>
+
+      <a class="card beta" href="./beta/">
+        <div class="card-body">
+          <h2>Beta版 v3.6.3.7</h2>
+          <p>新機能や調整中の内容を試す版です。挙動確認やテスト用にどうぞ。</p>
+
+          <div class="beta-note">
+            <div class="beta-note-title">更新内容</div>
+            <ul>
+              <li>実枚数ロジックを改善</li>
+              <li>グリッド移動後・最適化後・確定後の積算再計算に対応</li>
+              <li>ロス率、端材候補、2枚取り表示の安定性を向上</li>
+              <li>危険小片しきい値の調整UIを追加</li>
+            </ul>
           </div>
-        </a>
+        </div>
+        <div class="arrow">›</div>
+      </a>
 
-        <a class="card beta" href="./beta/index.html">
-         <div class="card-title">Beta版 v3.6.3.4</div>
-          <div class="card-desc">
-            新機能や調整中の内容を試す版です。挙動確認やテスト用にどうぞ。
-          </div>
-        </a>
+      <a class="card manual" href="./manual/">
+        <div class="card-body">
+          <h2>使い方マニュアル</h2>
+          <p>基本操作、水平合わせ、縮尺合わせ、施工範囲指定、グリッド生成、基準点、保存方法などをまとめたマニュアルです。</p>
+        </div>
+        <div class="arrow">›</div>
+      </a>
 
-        <a class="card manual manual-wide" href="./manual/index.html">
-          <div class="card-title">使い方マニュアル</div>
-          <div class="card-desc">
-            基本操作、水平合わせ、縮尺合わせ、施工範囲指定、グリッド生成、
-            基準点、保存方法などをまとめたマニュアルです。
-          </div>
-        </a>
-      </div>
+      <p class="footnote">※ Beta版は調整中のため、安定版と挙動が異なる場合があります。</p>
+    </main>
 
-      <div class="note">
-        ※ Beta版は調整中のため、安定版と挙動が異なる場合があります。
-      </div>
-    </div>
-
-    <div class="footer">
-      MKCRaFT
-    </div>
+    <div class="brand">MKCRaFT</div>
   </div>
 </body>
 </html>
