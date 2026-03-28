@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
+  <title>割付ポンっ 使い方マニュアル</title>
+  <style>
+    :root{
+      --bg1:#151922;
+      --bg2:#0d1015;
+      --panel:rgba(255,255,255,0.08);
+      --line:rgba(255,255,255,0.14);
+      --text:#fff;
+      --muted:rgba(255,255,255,0.78);
+      --accent:#3b82f6;
+      --safe-top:env(safe-area-inset-top);
+      --safe-bottom:env(safe-area-inset-bottom);
+    }
+
+    *{ box-sizing:border-box; }
+
+    html,body{
+      margin:0;
+      padding:0;
+      min-height:100%;
+      color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Hiragino Sans","Noto Sans JP",sans-serif;
+      background:
+        radial-gradient(circle at top right, rgba(10,132,255,0.14), transparent 28%),
+        radial-gradient(circle at top left, rgba(139,92,246,0.10), transparent 22%),
+        linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 100%);
+      line-height:1.75;
+    }
+
+    body{
+      padding:calc(16px + var(--safe-top)) 14px calc(24px + var(--safe-bottom));
+    }
+
+    .wrap{ max-width:860px; margin:0 auto; }
+
+    .back{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      color:#fff;
+      text-decoration:none;
+      background:rgba(255,255,255,0.1);
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:10px 14px;
+      font-size:14px;
+      font-weight:700;
+    }
+
+    .hero{ margin:14px 0 18px; }
+    .hero h1{
+      margin:0 0 10px;
+      font-size:clamp(28px,7vw,42px);
+      line-height:1.2;
+      letter-spacing:0.01em;
+    }
+    .hero p{ margin:0; color:var(--muted); font-size:15px; }
+
+    .panel{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:20px;
+      padding:16px;
+      backdrop-filter:blur(14px) saturate(1.1);
+      -webkit-backdrop-filter:blur(14px) saturate(1.1);
+    }
+
+    .notice{
+      margin:0 0 16px;
+      padding:12px 14px;
+      background:rgba(59,130,246,0.18);
+      border-left:4px solid var(--accent);
+      border-radius:12px;
+      font-size:14px;
+      color:#e9f2ff;
+    }
+
+    h2{
+      margin:24px 0 8px;
+      font-size:clamp(20px,5vw,28px);
+      line-height:1.35;
+    }
+    h3{
+      margin:20px 0 8px;
+      font-size:clamp(17px,4.5vw,22px);
+      line-height:1.4;
+    }
+
+    p, li{ font-size:15px; }
+    ul,ol{ margin:8px 0 0; padding-left:1.2em; }
+
+    .step-list li + li{ margin-top:4px; }
+
+    .tip{
+      margin-top:8px;
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,0.04);
+      color:var(--muted);
+      font-size:14px;
+    }
+
+    .footer-links{
+      margin-top:22px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+
+    .link-btn{
+      color:#fff;
+      text-decoration:none;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,0.08);
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:14px;
+      font-weight:700;
+    }
+
+    code{
+      background:rgba(255,255,255,0.12);
+      border-radius:6px;
+      padding:1px 6px;
+      font-size:0.95em;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="../">← トップに戻る</a>
+
+    <header class="hero">
+      <h1>使い方マニュアル</h1>
+      <p>iPhoneで「割付ポンっ（安定版）」を初めて使う方向けに、操作手順をまとめています。</p>
+    </header>
+
+    <main class="panel">
+      <p class="notice">このページは GitHub Pages で確実に開ける公開用マニュアルです。編集元の原稿は <code>docs/user-manual.md</code> に保持しています。</p>
+
+      <h2>1. 準備するもの</h2>
+      <ul>
+        <li>iPhone（Safari 推奨）</li>
+        <li>対象図面の PDF（または画像）</li>
+        <li>図面上で実寸が分かる寸法線（例：1000mm）</li>
+        <li>入力するタイル寸法（mm）</li>
+      </ul>
+
+      <h2>2. 基本操作の流れ</h2>
+      <ol class="step-list">
+        <li>PDF を読み込む</li>
+        <li><code>1. 水平合わせ</code> で図面の傾きを補正する</li>
+        <li><code>2. 縮尺合わせ</code> で実寸mmを設定する</li>
+        <li><code>3. 施工範囲指定</code> で施工エリアを囲む</li>
+        <li><code>4. グリッド生成（表示）</code> → <code>5. グリッド確定（固定）</code></li>
+        <li><code>6. 基準点</code> を置いて X左 / X右 / Y上 / Y下 を確認する</li>
+      </ol>
+      <p class="tip">※ 基準点はグリッド生成後に使用します。先に押しても進めないため、必ず手順5の後で実行してください。</p>
+
+      <h2>3. 各ステップ詳細</h2>
+
+      <h3>3-1. PDF読込</h3>
+      <p>左上のファイル選択から図面を読み込みます。下部ステータスが「図面読み込み完了」になればOKです。</p>
+
+      <h3>3-2. 水平合わせ</h3>
+      <p>水平基準にしたい直線上に2点を打って <code>確定</code> します。長い直線で合わせるほど精度が上がります。</p>
+
+      <h3>3-3. 縮尺合わせ</h3>
+      <p>寸法線上の2点を指定し、実寸値（mm）を入力して <code>確定</code> します。単位は mm で入力してください。</p>
+
+      <h3>3-4. 施工範囲指定</h3>
+      <p>施工したい内側ラインに沿って点を順番に追加します。誤タップは <code>戻す</code> で修正し、完了したら <code>完了（範囲ロック）</code> を押します。</p>
+
+      <h3>3-5. グリッド生成・確定</h3>
+      <p>タイル寸法（幅・高さ）を入力し、<code>4. グリッド生成（表示）</code> を実行します。位置調整後に <code>5. グリッド確定（固定）</code> を押して確定します。</p>
+
+      <h3>3-6. 基準点で割付確認</h3>
+      <p><code>6. 基準点（交点スナップ）</code> で基準点を置くと、下部に左右上下の距離（mm）や枚数目安が表示されます。</p>
+
+      <h2>4. つまずきやすいポイント</h2>
+      <ul>
+        <li>縮尺合わせ前にグリッドを出すと結果がずれます。</li>
+        <li>寸法値を cm / m で入れると誤差が大きくなります（mm指定）。</li>
+        <li>範囲指定の点順が飛ぶと形状が崩れます。</li>
+        <li>図面を再読込すると、既存の点・範囲・縮尺はリセットされます。</li>
+      </ul>
+
+      <div class="footer-links">
+        <a class="link-btn" href="../stable/">安定版を開く</a>
+        <a class="link-btn" href="../beta/">Beta版を開く</a>
+        <a class="link-btn" href="../docs/user-manual.md">原稿（Markdown）を見る</a>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
