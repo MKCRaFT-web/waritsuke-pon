@@ -127,6 +127,20 @@
       letter-spacing:0.01em;
     }
 
+    .version{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      margin-bottom:8px;
+      padding:4px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:0.02em;
+      background:rgba(255,255,255,0.14);
+      color:rgba(255,255,255,0.92);
+    }
+
     .card p{
       margin:0;
       font-size:clamp(15px, 4.2vw, 20px);
@@ -175,6 +189,21 @@
 
     .beta-note li + li{
       margin-top:4px;
+    }
+
+    .compare-note{
+      margin-top:18px;
+      padding:14px;
+      border-radius:16px;
+      background:rgba(255,255,255,0.06);
+      border:1px solid rgba(255,255,255,0.08);
+      font-size:13px;
+      line-height:1.65;
+      color:rgba(255,255,255,0.84);
+    }
+
+    .compare-note strong{
+      color:#fff;
     }
 
     .footnote{
@@ -227,29 +256,36 @@
     <main class="panel">
       <a class="card stable" href="./stable/">
         <div class="card-body">
-          <h2>安定版</h2>
-          <p>普段使い向け。動作確認済みの安定したバージョンを開きます。</p>
+          <div class="version">Stable v3.6.3.7</div>
+          <h2>安定版 v3.6.3.7</h2>
+          <p>現在の安定版は v3.6.3.7 です。通常利用はこちらをご利用ください。</p>
         </div>
         <div class="arrow">›</div>
       </a>
 
       <a class="card beta" href="./beta/">
         <div class="card-body">
-          <h2>Beta版 v3.6.3.7</h2>
-          <p>新機能や調整中の内容を試す版です。挙動確認やテスト用にどうぞ。</p>
+          <div class="version">Beta v3.6.3.8</div>
+          <h2>Beta版 v3.6.3.8 beta</h2>
+          <p>UI改善・操作性向上を反映したテスト版です。新機能を試したい方はこちらをご利用ください。</p>
 
           <div class="beta-note">
             <div class="beta-note-title">更新内容</div>
             <ul>
-              <li>実枚数ロジックを改善</li>
-              <li>グリッド移動後・最適化後・確定後の積算再計算に対応</li>
-              <li>ロス率、端材候補、2枚取り表示の安定性を向上</li>
-              <li>危険小片しきい値の調整UIを追加</li>
+              <li>UI改善と導線整理を反映（初見でも使いやすい構成を検証中）</li>
+              <li>iPhone片手操作を意識した配置調整をテスト</li>
+              <li>PDF読込後の操作フロー表示を改善予定</li>
+              <li>積算表示（ロス率・使用率・実枚数・2枚取り）の見やすさを継続調整</li>
             </ul>
           </div>
         </div>
         <div class="arrow">›</div>
       </a>
+
+      <div class="compare-note">
+        <strong>使い分けの目安：</strong>日常業務は <strong>安定版 v3.6.3.7</strong>、新しいUIや操作改善を先行確認したい場合は
+        <strong>Beta版 v3.6.3.8 beta</strong> をご利用ください。
+      </div>
 
       <a class="card manual" href="./manual/index.html">
         <div class="card-body">
@@ -259,7 +295,7 @@
         <div class="arrow">›</div>
       </a>
 
-      <p class="footnote">※ Beta版は調整中のため、安定版と挙動が異なる場合があります。</p>
+      <p class="footnote">※ Beta版 v3.6.3.8 beta は調整中のため、安定版 v3.6.3.7 と挙動が異なる場合があります。</p>
     </main>
 
     <div class="brand">MKCRaFT</div>
