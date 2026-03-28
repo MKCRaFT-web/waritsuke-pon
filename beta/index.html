@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>割付ポンッ！ - v3.6.3.4 積算タグ版</title>
+  <title>割付ポンッ！ - v3.6.3.7 実枚数ロジック版</title>
 
   <script src="https://unpkg.com/konva@9/konva.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
@@ -568,11 +568,11 @@
           <div class="estimateValue" id="chipArea">-</div>
         </div>
         <div class="estimateItem">
-          <div class="estimateLabel">タイル枚数</div>
+          <div class="estimateLabel">理論枚数</div>
           <div class="estimateValue" id="chipTiles">-</div>
         </div>
         <div class="estimateItem">
-          <div class="estimateLabel">ロス率</div>
+          <div class="estimateLabel">計算ロス率</div>
           <div class="estimateValue" id="chipLoss">-</div>
         </div>
         <div class="estimateItem">
@@ -584,7 +584,7 @@
           <div class="estimateValue" id="chipReusePair">-</div>
         </div>
         <div class="estimateItem">
-          <div class="estimateLabel">再利用後</div>
+          <div class="estimateLabel">実枚数</div>
           <div class="estimateValue" id="chipReuseTiles">-</div>
         </div>
       </div>
@@ -678,6 +678,11 @@
         <div class="row">
           <input type="number" id="tileWidthInput" value="300" />
           <input type="number" id="tileHeightInput" value="300" />
+        </div>
+        <label>危険小片しきい値(mm)</label>
+        <div class="row">
+          <input type="number" id="dangerMmVisibleInput" value="100" />
+          <button class="btn btn-dark" id="dangerToggleInlineBtn" style="width:auto; white-space:nowrap; padding: 0 12px;">危険小片 ON</button>
         </div>
         <button class="btn btn-green" id="showGridBtn">4. グリッド生成</button>
         <button class="btn btn-dark" id="confirmGridBtn">5. グリッド確定</button>
@@ -807,7 +812,7 @@ function fmtReuseCount(v) {
 }
 
 function fmtReuseTiles(v) {
-  return (v == null || !isFinite(v)) ? "-" : `${v.toFixed(1)}枚`;
+  return (v == null || !isFinite(v)) ? "-" : `${Math.ceil(v)}枚`;
 }
 
 let mode = "idle";
@@ -884,6 +889,15 @@ function updateUiChips() {
   document.getElementById("chipReusePair").textContent = `${fmtReuseCount(estimateState.reusePairCount)}`;
   document.getElementById("chipReuseTiles").textContent = `${fmtReuseTiles(estimateState.reuseAdjustedTileCount)}`;
 }
+
+function syncDangerUi() {
+  const hiddenInput = document.getElementById("dangerMmInput");
+  const visibleInput = document.getElementById("dangerMmVisibleInput");
+  const toggleBtn = document.getElementById("dangerToggleInlineBtn");
+  if (visibleInput && hiddenInput) visibleInput.value = hiddenInput.value || "100";
+  if (toggleBtn) toggleBtn.textContent = `危険小片 ${dangerOn ? "ON" : "OFF"}`;
+}
+
 
 function lockPhoto(lock) {
   photoLocked = !!lock;
@@ -1044,9 +1058,42 @@ function polygonAreaLocalPx2(points) {
   return Math.abs(sum) / 2;
 }
 
+function getCurrentSafeBEstimate() {
+  if (!gridGroup.visible() || !mmPerLocalPx) return null;
+
+  const poly = getPolyStagePointsFlat();
+  if (!poly || poly.length < 6) return null;
+
+  const twMm = parseFloat(document.getElementById("tileWidthInput").value);
+  const thMm = parseFloat(document.getElementById("tileHeightInput").value);
+  if (!isFinite(twMm) || !isFinite(thMm) || twMm <= 0 || thMm <= 0) return null;
+
+  const tileLocalW = twMm / mmPerLocalPx;
+  const tileLocalH = thMm / mmPerLocalPx;
+  const tileStageW = tileLocalW * (photoGroup.scaleX() || 1);
+  const tileStageH = tileLocalH * (photoGroup.scaleY() || 1);
+  if (!isFinite(tileStageW) || !isFinite(tileStageH) || tileStageW <= 0 || tileStageH <= 0) return null;
+
+  const dangerMm = Math.max(0, parseFloat(document.getElementById("dangerMmInput").value || "0"));
+  return calcSafeBEstimateFromGrid(poly, gridGroup.x(), gridGroup.y(), tileStageW, tileStageH, twMm, thMm, dangerMm);
+}
+
 function updateEstimateFromCurrentState(fullCount = null, partialCount = null, reuseCandidateCount = null, reusePairCount = null, reuseAdjustedTileCount = null) {
   const twMm = parseFloat(document.getElementById("tileWidthInput").value);
   const thMm = parseFloat(document.getElementById("tileHeightInput").value);
+
+  // グリッド表示中は、毎回いまのグリッド位置から再計算する。
+  // これで最適化後・ドラッグ後・確定後の再描画でも積算値が古いまま残らない。
+  if (gridGroup.visible()) {
+    const safeB = getCurrentSafeBEstimate();
+    if (safeB) {
+      fullCount = safeB.fullCount;
+      partialCount = safeB.partialCount;
+      reuseCandidateCount = safeB.reuseCandidateCount;
+      reusePairCount = safeB.reusePairCount;
+      reuseAdjustedTileCount = safeB.reuseAdjustedTileCount;
+    }
+  }
 
   if (!mmPerLocalPx || model.polyPoints.length < 3 || !isFinite(twMm) || !isFinite(thMm) || twMm <= 0 || thMm <= 0) {
     estimateState.areaM2 = null;
@@ -1056,6 +1103,7 @@ function updateEstimateFromCurrentState(fullCount = null, partialCount = null, r
     estimateState.reusePairCount = null;
     estimateState.reuseAdjustedTileCount = null;
     updateUiChips();
+  syncDangerUi();
     return;
   }
 
@@ -2012,6 +2060,17 @@ function getBBoxOfPoints(pts) {
   return { minX, minY, maxX, maxY };
 }
 
+function polygonAreaFromPointObjects(points) {
+  if (!points || points.length < 3) return 0;
+  let sum = 0;
+  for (let i = 0; i < points.length; i++) {
+    const a = points[i];
+    const b = points[(i + 1) % points.length];
+    sum += a.x * b.y - b.x * a.y;
+  }
+  return Math.abs(sum) / 2;
+}
+
 function isPointInPoly(x, y, poly) {
   let inside = false;
   const n = poly.length / 2;
@@ -2057,10 +2116,15 @@ function calcSafeBEstimateFromGrid(poly, gx, gy, tileStageW, tileStageH, twMm, t
   const polyObj = [];
   for (let k = 0; k < poly.length; k += 2) polyObj.push({ x: poly[k], y: poly[k + 1] });
 
+  const tileAreaMm2 = twMm * thMm;
+  const usageThreshold = 0.48;
+  const stripFullRatio = 0.92;
+  const stripThinRatio = 0.82;
+  const verticalMinShortSideMm = 100;
+
   let fullCount = 0;
   let partialCount = 0;
-  const horizCuts = [];
-  const vertCuts = [];
+  let reuseCandidateCount = 0;
 
   for (let i = iMin; i <= iMax; i++) {
     for (let j = jMin; j <= jMax; j++) {
@@ -2077,7 +2141,9 @@ function calcSafeBEstimateFromGrid(poly, gx, gy, tileStageW, tileStageH, twMm, t
       ];
 
       const insideCount = corners.filter((c) => isPointInPoly(c[0], c[1], poly)).length;
-      if (insideCount === 0) continue;
+      const clipped = clipPolygonToRect(polyObj, ax, ay, ax + tileStageW, ay + tileStageH);
+      const clippedAreaPx2 = polygonAreaFromPointObjects(clipped);
+      if (!(clipped && clipped.length >= 3) || clippedAreaPx2 <= 0.01) continue;
 
       if (insideCount >= 4) {
         fullCount++;
@@ -2086,53 +2152,35 @@ function calcSafeBEstimateFromGrid(poly, gx, gy, tileStageW, tileStageH, twMm, t
 
       partialCount++;
 
-      const clipped = clipPolygonToRect(polyObj, ax, ay, ax + tileStageW, ay + tileStageH);
-      const bb = (clipped && clipped.length >= 3) ? getBBoxOfPoints(clipped) : null;
+      const bb = getBBoxOfPoints(clipped);
       if (!bb) continue;
 
       const wMm = Math.abs(stagePxToMmX(Math.max(0, bb.maxX - bb.minX)));
       const hMm = Math.abs(stagePxToMmY(Math.max(0, bb.maxY - bb.minY)));
+      const clippedAreaMm2 = clippedAreaPx2 * Math.abs(mmPerLocalPx * mmPerLocalPx);
+      const usage = tileAreaMm2 > 0 ? clippedAreaMm2 / tileAreaMm2 : 0;
 
-      if (!isFinite(wMm) || !isFinite(hMm) || wMm <= 0 || hMm <= 0) continue;
+      if (!isFinite(wMm) || !isFinite(hMm) || !isFinite(usage) || wMm <= 0 || hMm <= 0 || usage <= 0) continue;
       if (dangerMm > 0 && Math.min(wMm, hMm) < dangerMm) continue;
 
-      const nearFullW = wMm >= twMm * 0.92;
-      const nearFullH = hMm >= thMm * 0.92;
-      const halfW = wMm <= twMm * 0.5 + 0.01;
-      const halfH = hMm <= thMm * 0.5 + 0.01;
+      const isHorizontalStrip = wMm >= twMm * stripFullRatio && hMm <= thMm * stripThinRatio;
+      const isVerticalStrip = hMm >= thMm * stripFullRatio && wMm <= twMm * stripThinRatio;
 
-      if (nearFullW && halfH) {
-        horizCuts.push(hMm);
-      } else if (nearFullH && halfW) {
-        vertCuts.push(wMm);
-      }
-    }
-  }
+      let canReuseAsTwoUp = false;
 
-  const pairToleranceMm = 8;
-
-  function pairCuts(arr) {
-    const list = arr.slice().sort((a, b) => a - b);
-    let pairs = 0;
-    const used = new Array(list.length).fill(false);
-
-    for (let i = 0; i < list.length; i++) {
-      if (used[i]) continue;
-      for (let j = i + 1; j < list.length; j++) {
-        if (used[j]) continue;
-        if (Math.abs(list[i] - list[j]) <= pairToleranceMm) {
-          used[i] = true;
-          used[j] = true;
-          pairs++;
-          break;
+      if (usage <= usageThreshold) {
+        if (isHorizontalStrip) {
+          canReuseAsTwoUp = true;
+        } else if (isVerticalStrip && Math.min(wMm, hMm) >= verticalMinShortSideMm) {
+          canReuseAsTwoUp = true;
         }
       }
+
+      if (canReuseAsTwoUp) reuseCandidateCount++;
     }
-    return pairs;
   }
 
-  const reusePairCount = pairCuts(horizCuts) + pairCuts(vertCuts);
-  const reuseCandidateCount = horizCuts.length + vertCuts.length;
+  const reusePairCount = Math.floor(reuseCandidateCount / 2);
   const reuseAdjustedTileCount = fullCount + partialCount - reusePairCount;
 
   return {
@@ -2208,15 +2256,16 @@ function updateGrid() {
       ];
 
       const insideCount = corners.filter((c) => isPointInPoly(c[0], c[1], poly)).length;
-      if (insideCount === 0) continue;
+      const clipped = clipPolygonToRect(polyObj, ax, ay, ax + tileStageW, ay + tileStageH);
+      const clippedAreaPx2 = polygonAreaFromPointObjects(clipped);
+      if (!(clipped && clipped.length >= 3) || clippedAreaPx2 <= 0.01) continue;
 
 
       let stroke = "rgba(0,123,255,0.35)";
       let fill = "rgba(0,123,255,0.08)";
 
       if (dangerOn && dangerMm > 0 && insideCount < 4) {
-        const clipped = clipPolygonToRect(polyObj, ax, ay, ax + tileStageW, ay + tileStageH);
-        const bb = (clipped && clipped.length >= 3) ? getBBoxOfPoints(clipped) : null;
+        const bb = getBBoxOfPoints(clipped);
 
         if (bb) {
           const wMm = Math.abs(stagePxToMmX(Math.max(0, bb.maxX - bb.minX)));
@@ -2529,6 +2578,7 @@ async function optimizeGrid(){
   gridGroup.position({ x: bestFine.gx, y: bestFine.gy });
   updateGrid();
   resnapBasePoint();
+  updateEstimateFromCurrentState();
   setStatus(`最適割付：完了（危険=${bestFine.danger} / 欠け=${bestFine.partial}）`, null);
 }
 
@@ -2855,6 +2905,7 @@ document.getElementById("confirmGridBtn").onclick = () => {
   gridGroup.draggable(false);
   lockPhoto(true);
   resnapBasePoint();
+  updateEstimateFromCurrentState();
   setStatus("グリッド確定（固定）→ 左下の ＋ / － / 戻す で表示調整", null);
   setDpadVisible(false);
   renderOverlay();
@@ -2917,11 +2968,26 @@ document.getElementById("gridReEditBtn").onclick = () => {
 document.getElementById("dangerToggleBtn").onclick = () => {
   dangerOn = !dangerOn;
   document.getElementById("dangerToggleBtn").textContent = "危険小片：" + (dangerOn ? "ON" : "OFF");
+  syncDangerUi();
   if (gridGroup.visible()) updateGrid();
   updateBaseDimsToPoly();
 };
 
-document.getElementById("dangerMmInput").addEventListener("change", () => { if (gridGroup.visible()) updateGrid(); });
+document.getElementById("dangerMmInput").addEventListener("change", () => {
+  syncDangerUi();
+  if (gridGroup.visible()) updateGrid();
+});
+
+document.getElementById("dangerMmVisibleInput").addEventListener("change", (e) => {
+  const v = Math.max(0, parseFloat(e.target.value || "0"));
+  document.getElementById("dangerMmInput").value = isFinite(v) ? String(v) : "0";
+  syncDangerUi();
+  if (gridGroup.visible()) updateGrid();
+});
+
+document.getElementById("dangerToggleInlineBtn").addEventListener("click", () => {
+  document.getElementById("dangerToggleBtn").click();
+});
 document.getElementById("tileWidthInput").addEventListener("change", () => { if (gridGroup.visible()) updateGrid(); updateBaseDimsToPoly(); });
 document.getElementById("tileHeightInput").addEventListener("change", () => { if (gridGroup.visible()) updateGrid(); updateBaseDimsToPoly(); });
 
@@ -3171,6 +3237,7 @@ setActiveSection("align");
 setEstimatePanelOpen(false);
 setBaseInfoVisible(false);
 updateUiChips();
+syncDangerUi();
 renderOverlay();
 </script>
 </body>
