@@ -8,6 +8,7 @@
   <script src="https://unpkg.com/konva@9/konva.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 
+  <script src="../analytics.js"></script>
   <style>
     :root{
       --bg:#0f1115;
@@ -705,6 +706,11 @@
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js";
 
+// GA4イベント送信用の共通ヘルパー
+const trackAppEvent = (eventName, params = {}) => {
+  window.WaritsukeAnalytics?.trackEvent(eventName, params);
+};
+
 const GRID_MARGIN_TILES = 6;
 const GRID_MAX_CELLS = 80000;
 const BASE_INTERSECT_EPS = 0.5;
@@ -727,6 +733,8 @@ const REPEAT_INTERVAL = 42;
 const POSITION_ROUND_UNIT = 0.25;
 const POLY_OVERLAP_MIN_PX = 10;
 const TAP_SUPPRESS_MS = 120;
+
+trackAppEvent("app_open", { app_variant: window.location.pathname.includes("/beta/") ? "beta" : "stable" });
 
 const stage = new Konva.Stage({
   container: "container",
@@ -2607,6 +2615,7 @@ document.getElementById("fileInput").onchange = async (e) => {
       canvas.width = viewport.width;
       await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
       setupImage(canvas);
+      trackAppEvent("pdf_loaded", { app_variant: window.location.pathname.includes("/beta/") ? "beta" : "stable" });
     } else {
       const img = new Image();
       img.onload = () => setupImage(img);
@@ -2878,6 +2887,8 @@ document.getElementById("showGridBtn").onclick = () => {
   if (!mmPerLocalPx) { alert("先に縮尺合わせを完了してください。"); return; }
   if (model.polyPoints.length < 3) { alert("先に施工範囲（ポリゴン）を完了してください。"); return; }
 
+  trackAppEvent("layout_started", { app_variant: window.location.pathname.includes("/beta/") ? "beta" : "stable" });
+
   gridConfirmed = false;
   stage.draggable(false);
   hideZoomHud();
@@ -2898,6 +2909,7 @@ document.getElementById("showGridBtn").onclick = () => {
 
 document.getElementById("confirmGridBtn").onclick = () => {
   if (!gridGroup.visible()) return;
+  trackAppEvent("layout_finished", { app_variant: window.location.pathname.includes("/beta/") ? "beta" : "stable" });
   gridConfirmed = true;
   showZoomHud("grid");
   stage.draggable(true);
