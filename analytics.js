@@ -1,5 +1,5 @@
 // GA4計測設定: デプロイ前にこのIDを差し替えてください。
-const GA4_MEASUREMENT_ID = "G-XXXXXXXXXX";
+const GA4_MEASUREMENT_ID = "G-EP58TWLTJY";
 
 (function initAnalytics() {
   const isConfigured = /^G-[A-Z0-9]+$/i.test(GA4_MEASUREMENT_ID) && GA4_MEASUREMENT_ID !== "G-XXXXXXXXXX";
