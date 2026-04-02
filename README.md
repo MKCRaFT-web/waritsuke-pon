@@ -2,13 +2,13 @@
 
 ## GA4 測定IDの設定場所
 1. `analytics.js` を開きます。
-2. 先頭の `GA4_MEASUREMENT_ID` を実際の測定ID（例: `G-ABC123DEF4`）に差し替えます。
+2. 先頭の `GA4_MEASUREMENT_ID` に本番測定ID `G-EP58TWLTJY` を設定済みです（必要ならここを差し替えてください）。
 
 ```js
-const GA4_MEASUREMENT_ID = "G-XXXXXXXXXX";
+const GA4_MEASUREMENT_ID = "G-EP58TWLTJY";
 ```
 
-> `G-XXXXXXXXXX` のままでは計測は送信されません。
+> 別のプロパティで使う場合はこのIDだけ差し替えれば運用できます。
 
 ## 送信イベント
 - `page_view`: 各ページ表示時（GA4の`gtag("config", ...)`で自動送信）
