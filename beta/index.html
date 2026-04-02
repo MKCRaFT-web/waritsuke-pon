@@ -747,6 +747,127 @@ const finishLayoutTracking = () => {
   });
 };
 
+function attachTapSelectAll(inputId) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+
+  const selectAll = () => {
+    try {
+      if (document.activeElement !== input) return;
+      input.select();
+    } catch (_) {}
+  };
+
+  input.addEventListener("focus", () => requestAnimationFrame(selectAll));
+  input.addEventListener("pointerup", () => requestAnimationFrame(selectAll));
+}
+
+function buildExportBaseDimsOverlay() {
+  const summaryText = document.getElementById("baseSummaryText")?.textContent || "";
+  const xl = document.getElementById("baseXLmmOut")?.textContent || "-";
+  const xr = document.getElementById("baseXRmmOut")?.textContent || "-";
+  const yu = document.getElementById("baseYUmmOut")?.textContent || "-";
+  const yd = document.getElementById("baseYDmmOut")?.textContent || "-";
+  const xlTile = document.getElementById("baseXLtileOut")?.textContent || "-";
+  const xrTile = document.getElementById("baseXRtileOut")?.textContent || "-";
+  const yuTile = document.getElementById("baseYUtileOut")?.textContent || "-";
+  const ydTile = document.getElementById("baseYDtileOut")?.textContent || "-";
+
+  const hasBaseDims = [xl, xr, yu, yd].some((v) => v && v !== "-");
+  if (!hasBaseDims) return null;
+
+  const pad = 12;
+  const overlayW = Math.min(stage.width() - pad * 2, 520);
+  const titleH = 34;
+  const boxGap = 8;
+  const cardGap = 6;
+  const cardW = (overlayW - cardGap * 3) / 4;
+  const cardH = 64;
+  const overlayH = titleH + boxGap + cardH + 12;
+
+  const x = Math.max(pad, (stage.width() - overlayW) / 2);
+  const y = Math.max(pad, stage.height() - overlayH - 16);
+
+  const group = new Konva.Group({
+    x,
+    y,
+    listening: false,
+    name: "exportBaseDimsOverlay"
+  });
+
+  group.add(new Konva.Rect({
+    x: 0,
+    y: 0,
+    width: overlayW,
+    height: overlayH,
+    cornerRadius: 16,
+    fill: "rgba(20,24,32,0.72)",
+    stroke: "rgba(255,255,255,0.12)",
+    strokeWidth: 1
+  }));
+
+  group.add(new Konva.Text({
+    x: 12,
+    y: 10,
+    width: overlayW - 24,
+    text: summaryText || "基準点寸法",
+    fontSize: 14,
+    fontStyle: "bold",
+    fill: "#ffffff"
+  }));
+
+  [
+    { label: "X左", mm: xl, tile: xlTile },
+    { label: "X右", mm: xr, tile: xrTile },
+    { label: "Y上", mm: yu, tile: yuTile },
+    { label: "Y下", mm: yd, tile: ydTile }
+  ].forEach((card, i) => {
+    const cx = 6 + i * (cardW + cardGap);
+    const cy = titleH + boxGap;
+
+    group.add(new Konva.Rect({
+      x: cx,
+      y: cy,
+      width: cardW,
+      height: cardH,
+      cornerRadius: 10,
+      fill: "rgba(255,255,255,0.08)",
+      stroke: "rgba(255,255,255,0.10)",
+      strokeWidth: 1
+    }));
+
+    group.add(new Konva.Text({
+      x: cx + 8,
+      y: cy + 6,
+      width: cardW - 16,
+      text: card.label,
+      fontSize: 11,
+      fill: "rgba(255,255,255,0.78)"
+    }));
+
+    group.add(new Konva.Text({
+      x: cx + 8,
+      y: cy + 24,
+      width: cardW - 16,
+      text: card.mm,
+      fontSize: 15,
+      fontStyle: "bold",
+      fill: "#ffffff"
+    }));
+
+    group.add(new Konva.Text({
+      x: cx + 8,
+      y: cy + 44,
+      width: cardW - 16,
+      text: card.tile,
+      fontSize: 10,
+      fill: "rgba(255,255,255,0.68)"
+    }));
+  });
+
+  return group;
+}
+
 const GRID_MARGIN_TILES = 6;
 const GRID_MAX_CELLS = 80000;
 const BASE_INTERSECT_EPS = 0.5;
@@ -3053,6 +3174,9 @@ document.getElementById("dangerToggleInlineBtn").addEventListener("click", () =>
 });
 document.getElementById("tileWidthInput").addEventListener("change", () => { if (gridGroup.visible()) updateGrid(); updateBaseDimsToPoly(); });
 document.getElementById("tileHeightInput").addEventListener("change", () => { if (gridGroup.visible()) updateGrid(); updateBaseDimsToPoly(); });
+attachTapSelectAll("realDistInput");
+attachTapSelectAll("tileWidthInput");
+attachTapSelectAll("tileHeightInput");
 
 document.getElementById("basePointBtn").onclick = () => {
   if (!gridGroup.visible()) { alert("先にグリッドを生成してください。"); return; }
@@ -3156,10 +3280,21 @@ document.getElementById("saveImageBtn").onclick = () => {
   hud.style.display = "none";
 
   setTimeout(() => {
+    const exportOverlay = buildExportBaseDimsOverlay();
+    if (exportOverlay) {
+      uiLayer.add(exportOverlay);
+      uiLayer.draw();
+    }
+
     const link = document.createElement("a");
     link.download = "割付図.png";
     link.href = stage.toDataURL({ pixelRatio: 2 });
     link.click();
+
+    if (exportOverlay) {
+      exportOverlay.destroy();
+      uiLayer.draw();
+    }
 
     topBar.style.display = "flex";
     bottomBar.style.display = "flex";
