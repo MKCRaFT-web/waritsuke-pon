@@ -711,6 +711,42 @@ const trackAppEvent = (eventName, params = {}) => {
   window.WaritsukeAnalytics?.trackEvent(eventName, params);
 };
 
+const appVariant = window.location.pathname.includes("/beta/") ? "beta" : "stable";
+let hasSentAppOpen = false;
+const layoutTrackingState = {
+  started: false,
+  finished: false,
+  sessionId: null
+};
+let layoutSessionSeq = 0;
+
+const resetLayoutTracking = () => {
+  layoutTrackingState.started = false;
+  layoutTrackingState.finished = false;
+  layoutTrackingState.sessionId = null;
+};
+
+const startLayoutTracking = () => {
+  if (layoutTrackingState.started && !layoutTrackingState.finished) return;
+  layoutTrackingState.started = true;
+  layoutTrackingState.finished = false;
+  layoutTrackingState.sessionId = `${Date.now()}-${++layoutSessionSeq}`;
+  trackAppEvent("layout_started", {
+    app_variant: appVariant,
+    layout_session_id: layoutTrackingState.sessionId
+  });
+};
+
+const finishLayoutTracking = () => {
+  if (!layoutTrackingState.started || layoutTrackingState.finished) return;
+  layoutTrackingState.finished = true;
+  trackAppEvent("layout_finished", {
+    app_variant: appVariant,
+    layout_session_id: layoutTrackingState.sessionId,
+    result: "success"
+  });
+};
+
 const GRID_MARGIN_TILES = 6;
 const GRID_MAX_CELLS = 80000;
 const BASE_INTERSECT_EPS = 0.5;
@@ -733,8 +769,6 @@ const REPEAT_INTERVAL = 42;
 const POSITION_ROUND_UNIT = 0.25;
 const POLY_OVERLAP_MIN_PX = 10;
 const TAP_SUPPRESS_MS = 120;
-
-trackAppEvent("app_open", { app_variant: window.location.pathname.includes("/beta/") ? "beta" : "stable" });
 
 const stage = new Konva.Stage({
   container: "container",
@@ -2607,15 +2641,31 @@ document.getElementById("fileInput").onchange = async (e) => {
 
   reader.onload = async function () {
     if (file.type === "application/pdf") {
-      const pdf = await pdfjsLib.getDocument(new Uint8Array(this.result)).promise;
-      const page = await pdf.getPage(1);
-      const viewport = page.getViewport({ scale: 2.5 });
-      const canvas = document.createElement("canvas");
-      canvas.height = viewport.height;
-      canvas.width = viewport.width;
-      await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
-      setupImage(canvas);
-      trackAppEvent("pdf_loaded", { app_variant: window.location.pathname.includes("/beta/") ? "beta" : "stable" });
+      let hasTrackedPdfLoadResult = false;
+      try {
+        const pdf = await pdfjsLib.getDocument(new Uint8Array(this.result)).promise;
+        const page = await pdf.getPage(1);
+        const viewport = page.getViewport({ scale: 2.5 });
+        const canvas = document.createElement("canvas");
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+        await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+        setupImage(canvas);
+        if (!hasTrackedPdfLoadResult) {
+          hasTrackedPdfLoadResult = true;
+          trackAppEvent("pdf_loaded", { app_variant: appVariant, result: "success" });
+        }
+      } catch (error) {
+        if (!hasTrackedPdfLoadResult) {
+          hasTrackedPdfLoadResult = true;
+          trackAppEvent("error_pdf_load", {
+            app_variant: appVariant,
+            result: "error",
+            reason: error?.name || "pdf_load_failed"
+          });
+        }
+        alert("PDFの読み込みに失敗しました。別のファイルでお試しください。");
+      }
     } else {
       const img = new Image();
       img.onload = () => setupImage(img);
@@ -2653,6 +2703,7 @@ function setupImage(source) {
   lastTileStageW = 0;
   lastTileStageH = 0;
   gridConfirmed = false;
+  resetLayoutTracking();
   pointDragging = false;
   suppressNextTap = false;
   if (suppressTapTimer) clearTimeout(suppressTapTimer);
@@ -2887,7 +2938,7 @@ document.getElementById("showGridBtn").onclick = () => {
   if (!mmPerLocalPx) { alert("先に縮尺合わせを完了してください。"); return; }
   if (model.polyPoints.length < 3) { alert("先に施工範囲（ポリゴン）を完了してください。"); return; }
 
-  trackAppEvent("layout_started", { app_variant: window.location.pathname.includes("/beta/") ? "beta" : "stable" });
+  startLayoutTracking();
 
   gridConfirmed = false;
   stage.draggable(false);
@@ -2909,7 +2960,7 @@ document.getElementById("showGridBtn").onclick = () => {
 
 document.getElementById("confirmGridBtn").onclick = () => {
   if (!gridGroup.visible()) return;
-  trackAppEvent("layout_finished", { app_variant: window.location.pathname.includes("/beta/") ? "beta" : "stable" });
+  finishLayoutTracking();
   gridConfirmed = true;
   showZoomHud("grid");
   stage.draggable(true);
@@ -3251,6 +3302,11 @@ setBaseInfoVisible(false);
 updateUiChips();
 syncDangerUi();
 renderOverlay();
+
+if (!hasSentAppOpen) {
+  hasSentAppOpen = true;
+  trackAppEvent("app_open", { app_variant: appVariant });
+}
 </script>
 </body>
 </html>
