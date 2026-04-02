@@ -2714,15 +2714,6 @@ function setupImage(source) {
   stage.draggable(false);
   hideZoomHud();
   resetStageView();
-  
-document.getElementById("pointPrevBtn").addEventListener("click", () => {
-  focusPolyPointByOffset(-1);
-});
-
-document.getElementById("pointNextBtn").addEventListener("click", () => {
-  focusPolyPointByOffset(1);
-});
-
 lockPhoto(false);
   setMode("idle");
 
@@ -3050,6 +3041,12 @@ document.getElementById("dangerMmVisibleInput").addEventListener("change", (e) =
 
 document.getElementById("dangerToggleInlineBtn").addEventListener("click", () => {
   document.getElementById("dangerToggleBtn").click();
+});
+document.getElementById("pointPrevBtn").addEventListener("click", () => {
+  focusPolyPointByOffset(-1);
+});
+document.getElementById("pointNextBtn").addEventListener("click", () => {
+  focusPolyPointByOffset(1);
 });
 document.getElementById("tileWidthInput").addEventListener("change", () => { if (gridGroup.visible()) updateGrid(); updateBaseDimsToPoly(); });
 document.getElementById("tileHeightInput").addEventListener("change", () => { if (gridGroup.visible()) updateGrid(); updateBaseDimsToPoly(); });
