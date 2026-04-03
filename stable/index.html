@@ -799,7 +799,7 @@ const PICK_NEAR_THRESHOLD_PX = 44;
 const DRAG_THRESHOLD_PX = 4;
 const POINT_STEP_FINE = 0.5;
 const POINT_STEP_COARSE = 1;
-const STEP_CHOICES = [1, 5, 10];
+const STEP_CHOICES = [0.5, 1, 5, 10];
 const SNAP_STAGE_PX = 6;
 const AXIS_SNAP_STAGE_PX = 5;
 const GRID_SNAP_STAGE_PX = 7;
@@ -954,7 +954,9 @@ function setStatus(left, right) {
 }
 
 function dpadCenterLabel() {
-  return (dpadMode === "grid") ? `${nudgeMm}mm` : `${pointStepPx}px`;
+  const v = Number.isInteger(nudgeMm) ? String(nudgeMm) : String(nudgeMm);
+  const p = Number.isInteger(pointStepPx) ? String(pointStepPx) : String(pointStepPx);
+  return (dpadMode === "grid") ? `${v}mm` : `${p}px`;
 }
 
 function saveUndoState(reason = "") {
@@ -1331,21 +1333,22 @@ function compensateUiScale() {
     const pointLabel = g.findOne(".pointLabel");
     const isActive = activePointKey && g.getAttr("pointKey") === activePointKey;
     const activeColor = "#22d3ee";
+    const baseColor = g.getAttr("baseColor") || "#ffffff";
 
     if (hitCircle) hitCircle.radius(getDynamicHitRadius() * inv);
     if (crossH) {
       crossH.points([-CROSS_HALF * inv, 0, CROSS_HALF * inv, 0]);
-      if (isActive) crossH.stroke(activeColor);
+      crossH.stroke(isActive ? activeColor : baseColor);
       crossH.strokeWidth(Math.max(1, STROKE_THIN * inv));
     }
     if (crossV) {
       crossV.points([0, -CROSS_HALF * inv, 0, CROSS_HALF * inv]);
-      if (isActive) crossV.stroke(activeColor);
+      crossV.stroke(isActive ? activeColor : baseColor);
       crossV.strokeWidth(Math.max(1, STROKE_THIN * inv));
     }
     if (dotCore) {
       dotCore.radius(Math.max(2.2, DOT_RADIUS * inv * (isActive ? 1.35 : 1)));
-      if (isActive) dotCore.fill(activeColor);
+      dotCore.fill(isActive ? activeColor : baseColor);
       dotCore.strokeWidth(Math.max(0.8, 1 * inv));
     }
     if (pointLabel) {
@@ -1830,6 +1833,8 @@ function renderOverlay() {
       listening: false,
       name: "dotCore"
     }));
+
+    g.setAttr("baseColor", color);
 
     if (pointNo != null) {
       g.add(new Konva.Text({
