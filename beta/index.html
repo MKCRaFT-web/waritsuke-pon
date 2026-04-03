@@ -202,6 +202,20 @@
       white-space: nowrap;
     }
 
+    #modePinned{
+      position: fixed;
+      top: calc(56px + var(--safe-top));
+      right: 12px;
+      z-index: 119;
+      border-radius: 999px;
+      padding: 6px 11px;
+      font-size: 10px;
+      font-weight: 800;
+      color: #fff;
+      pointer-events: none;
+      background: rgba(0,0,0,0.34);
+    }
+
     #menuSheet{
       position: fixed;
       top: calc(54px + var(--safe-top));
@@ -375,6 +389,23 @@
       overscroll-behavior: contain;
     }
 
+    .panelSection{
+      border-radius: 12px;
+      padding: 5px 6px;
+    }
+
+    .panelResult{
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.05);
+      margin-bottom: 2px;
+    }
+
+    .panelEdit{
+      background: rgba(255,255,255,0.06);
+      border-top: 1px solid rgba(255,255,255,0.16);
+      padding-top: 7px;
+    }
+
     #baseSummaryBar{
       display:none;
       border-radius: 12px;
@@ -534,6 +565,7 @@
       #bottomBar{ max-height: 17vh; }
       #zoomHud, #dpad{ max-width: calc(100vw - 36px); }
       .infoMiniValue{ font-size: 11px; }
+      #modePinned{ top: calc(56px + var(--safe-top)); right: 10px; }
     }
   </style>
 </head>
@@ -592,6 +624,8 @@
     </div>
   </div>
 
+  <div id="modePinned" class="glassMini" aria-live="polite">モード: 待機</div>
+
   <div id="menuSheet" class="glass">
     <button class="menuItem" id="openFileBtn">図面を読み込む</button>
     <button class="menuItem" id="dangerToggleProxyBtn">危険小片 ON/OFF</button>
@@ -613,7 +647,7 @@
   <div id="dpad" aria-label="微調整">
     <div class="pad">
       <div></div><button id="dUp">▲</button><div></div>
-      <button id="dLeft">◀</button><button id="dCenter" class="center">5mm</button><button id="dRight">▶</button>
+      <button id="dLeft">◀</button><button id="dCenter" class="center">1mm</button><button id="dRight">▶</button>
       <div></div><button id="dDown">▼</button><div></div>
     </div>
   </div>
@@ -626,6 +660,7 @@
       </button>
     </div>
 
+    <div id="resultPanel" class="panelSection panelResult">
     <div id="bottomInfo">
       <div class="infoMini">
         <div class="infoMiniLabel">X左</div>
@@ -648,7 +683,9 @@
         <div class="infoMiniSub" id="baseYDtileOut">-</div>
       </div>
     </div>
+    </div>
 
+    <div id="editPanel" class="panelSection panelEdit">
     <div id="bottomActions">
       <div id="currentSectionLabel">水平合わせ</div>
 
@@ -667,7 +704,7 @@
       <div id="sectionPoly" class="sectionCompact">
         <button class="btn btn-orange" id="polyBtn">3. 施工範囲指定</button>
         <div class="actionGrid2">
-          <button class="btn btn-red" id="undoBtn">戻す</button>
+          <button class="btn btn-red" id="undoBtn">1手戻し</button>
           <button class="btn btn-green" id="closePolyBtn">完了</button>
         </div>
         <button class="btn btn-gray" id="polyEditBtn">✏️ 範囲調整</button>
@@ -690,6 +727,7 @@
         <button class="btn btn-purple" id="optBtn">🎯 最適割付</button>
         <button class="btn btn-dark" id="basePointBtn">6. 基準点</button>
       </div>
+    </div>
     </div>
   </div>
 
@@ -747,172 +785,6 @@ const finishLayoutTracking = () => {
   });
 };
 
-function attachTapSelectAll(inputId) {
-  const input = document.getElementById(inputId);
-  if (!input) return;
-  if (input.dataset.tapSelectAllBound === "1") return;
-  input.dataset.tapSelectAllBound = "1";
-
-  let didAutoSelectOnFocus = false;
-  let focusedAt = 0;
-
-  const selectAll = () => {
-    try {
-      if (document.activeElement !== input) return;
-      if (input.value === "") return;
-      input.setSelectionRange(0, input.value.length);
-      didAutoSelectOnFocus = true;
-    } catch (_) {}
-  };
-
-  input.addEventListener("focus", () => {
-    focusedAt = Date.now();
-    didAutoSelectOnFocus = false;
-  });
-
-  input.addEventListener("blur", () => {
-    didAutoSelectOnFocus = false;
-    focusedAt = 0;
-  });
-
-  input.addEventListener("pointerup", (e) => {
-    if (e.pointerType !== "touch") return;
-    if (didAutoSelectOnFocus) return;
-    if (Date.now() - focusedAt > 500) return;
-    if (typeof input.selectionStart === "number" && typeof input.selectionEnd === "number" && input.selectionStart !== input.selectionEnd) return;
-    requestAnimationFrame(selectAll);
-  });
-}
-
-let tileInputFrame = null;
-function scheduleTileInputUpdate() {
-  if (tileInputFrame) cancelAnimationFrame(tileInputFrame);
-  tileInputFrame = requestAnimationFrame(() => {
-    tileInputFrame = null;
-    if (gridGroup.visible()) updateGrid();
-    updateBaseDimsToPoly();
-  });
-}
-
-function buildExportBaseDimsOverlay() {
-  const summaryText = document.getElementById("baseSummaryText")?.textContent || "";
-  const xl = document.getElementById("baseXLmmOut")?.textContent || "-";
-  const xr = document.getElementById("baseXRmmOut")?.textContent || "-";
-  const yu = document.getElementById("baseYUmmOut")?.textContent || "-";
-  const yd = document.getElementById("baseYDmmOut")?.textContent || "-";
-  const xlTile = document.getElementById("baseXLtileOut")?.textContent || "-";
-  const xrTile = document.getElementById("baseXRtileOut")?.textContent || "-";
-  const yuTile = document.getElementById("baseYUtileOut")?.textContent || "-";
-  const ydTile = document.getElementById("baseYDtileOut")?.textContent || "-";
-
-  const hasBaseDims = [xl, xr, yu, yd].some((v) => v && v !== "-");
-  if (!hasBaseDims) return null;
-
-  const pad = 12;
-  const overlayW = Math.min(stage.width() - pad * 2, 520);
-  const titleH = 48;
-  const boxGap = 8;
-  const cardGap = 6;
-  const cardW = (overlayW - cardGap * 3) / 4;
-  const cardH = 74;
-  const overlayH = titleH + boxGap + cardH + 12;
-
-  const x = Math.max(pad, (stage.width() - overlayW) / 2);
-  const y = Math.max(pad, stage.height() - overlayH - 16);
-
-  const group = new Konva.Group({
-    x,
-    y,
-    listening: false,
-    name: "exportBaseDimsOverlay"
-  });
-
-  const overlayRectStyle = {
-    cornerRadius: 16,
-    fill: "rgba(20,24,32,0.72)",
-    stroke: "rgba(255,255,255,0.24)",
-    strokeWidth: 1
-  };
-
-  group.add(new Konva.Rect({
-    x: 0,
-    y: 0,
-    width: overlayW,
-    height: overlayH,
-    ...overlayRectStyle
-  }));
-
-  group.add(new Konva.Text({
-    x: 12,
-    y: 9,
-    width: overlayW - 24,
-    text: summaryText || "基準点寸法",
-    fontSize: 14,
-    fontStyle: "bold",
-    fill: "#ffffff"
-  }));
-
-  group.add(new Konva.Text({
-    x: 12,
-    y: 28,
-    width: overlayW - 24,
-    text: `タイル ${document.getElementById("tileWidthInput")?.value || "-"}×${document.getElementById("tileHeightInput")?.value || "-"} mm`,
-    fontSize: 11,
-    fill: "rgba(255,255,255,0.82)"
-  }));
-
-  [
-    { label: "X左", mm: xl, tile: xlTile },
-    { label: "X右", mm: xr, tile: xrTile },
-    { label: "Y上", mm: yu, tile: yuTile },
-    { label: "Y下", mm: yd, tile: ydTile }
-  ].forEach((card, i) => {
-    const cx = 6 + i * (cardW + cardGap);
-    const cy = titleH + boxGap;
-
-    group.add(new Konva.Rect({
-      x: cx,
-      y: cy,
-      width: cardW,
-      height: cardH,
-      cornerRadius: 10,
-      fill: "rgba(255,255,255,0.08)",
-      stroke: "rgba(255,255,255,0.10)",
-      strokeWidth: 1
-    }));
-
-    group.add(new Konva.Text({
-      x: cx + 8,
-      y: cy + 6,
-      width: cardW - 16,
-      text: card.label,
-      fontSize: 11,
-      fill: "rgba(255,255,255,0.78)"
-    }));
-
-    group.add(new Konva.Text({
-      x: cx + 8,
-      y: cy + 24,
-      width: cardW - 16,
-      text: card.mm,
-      fontSize: 16,
-      fontStyle: "bold",
-      fill: "#ffffff"
-    }));
-
-    group.add(new Konva.Text({
-      x: cx + 8,
-      y: cy + 50,
-      width: cardW - 16,
-      text: card.tile,
-      fontSize: 11,
-      fill: "rgba(255,255,255,0.76)"
-    }));
-  });
-
-  return group;
-}
-
 const GRID_MARGIN_TILES = 6;
 const GRID_MAX_CELLS = 80000;
 const BASE_INTERSECT_EPS = 0.5;
@@ -927,6 +799,7 @@ const PICK_NEAR_THRESHOLD_PX = 44;
 const DRAG_THRESHOLD_PX = 4;
 const POINT_STEP_FINE = 0.5;
 const POINT_STEP_COARSE = 1;
+const STEP_CHOICES = [0.5, 1, 5, 10];
 const SNAP_STAGE_PX = 6;
 const AXIS_SNAP_STAGE_PX = 5;
 const GRID_SNAP_STAGE_PX = 7;
@@ -959,6 +832,11 @@ const polyShape = new Konva.Line({
   listening: false
 });
 
+const outsideShade = new Konva.Shape({
+  listening: false,
+  visible: false
+});
+
 const alignLine = new Konva.Line({
   stroke: "#6f42c1",
   strokeWidth: STROKE_THIN,
@@ -986,7 +864,7 @@ zoomLayer.add(zoomGroup);
 
 photoGroup.add(bgImage);
 mainLayer.add(photoGroup, gridGroup);
-uiLayer.add(polyShape, alignLine, scaleLine);
+uiLayer.add(outsideShade, polyShape, alignLine, scaleLine);
 stage.add(mainLayer, uiLayer, zoomLayer);
 
 const model = {
@@ -1034,8 +912,8 @@ let stageScale = 1;
 let stagePos = { x: 0, y: 0 };
 let zoomHudMode = "hidden";
 let dpadMode = "grid";
-let nudgeMm = 5;
-let pointStepPx = POINT_STEP_FINE;
+let nudgeMm = 1;
+let pointStepPx = 1;
 let activePointKey = null;
 let activePointNode = null;
 let pointDragging = false;
@@ -1047,11 +925,13 @@ let dpadRepeatInterval = null;
 let baseInfoExpanded = false;
 let suppressSnapForNudge = false;
 let dpadActiveButton = null;
+let undoState = null;
 
 const statusLeft = null;
 const statusRight = null;
 const zoomHud = document.getElementById("zoomHud");
 const leftDock = document.getElementById("leftDock");
+const modePinned = document.getElementById("modePinned");
 
 const baseSummaryBar = document.getElementById("baseSummaryBar");
 const baseSummaryToggle = document.getElementById("baseSummaryToggle");
@@ -1071,6 +951,39 @@ function armTapSuppression(ms = TAP_SUPPRESS_MS) {
 function setStatus(left, right) {
   if (left != null && statusLeft) statusLeft.textContent = left;
   if (right != null && statusRight) statusRight.textContent = right;
+}
+
+function dpadCenterLabel() {
+  const v = Number.isInteger(nudgeMm) ? String(nudgeMm) : String(nudgeMm);
+  const p = Number.isInteger(pointStepPx) ? String(pointStepPx) : String(pointStepPx);
+  return (dpadMode === "grid") ? `${v}mm` : `${p}px`;
+}
+
+function saveUndoState(reason = "") {
+  undoState = {
+    reason,
+    alignPoints: model.alignPoints.map((p) => ({ ...p })),
+    scalePoints: model.scalePoints.map((p) => ({ ...p })),
+    polyPoints: model.polyPoints.map((p) => ({ ...p })),
+    basePoint: model.basePoint ? { ...model.basePoint } : null,
+    activePointKey,
+    gridX: gridGroup.x(),
+    gridY: gridGroup.y()
+  };
+}
+
+function applyUndoState() {
+  if (!undoState) return false;
+  model.alignPoints = undoState.alignPoints.map((p) => ({ ...p }));
+  model.scalePoints = undoState.scalePoints.map((p) => ({ ...p }));
+  model.polyPoints = undoState.polyPoints.map((p) => ({ ...p }));
+  model.basePoint = undoState.basePoint ? { ...undoState.basePoint } : null;
+  activePointKey = undoState.activePointKey || null;
+  if (isFinite(undoState.gridX) && isFinite(undoState.gridY)) {
+    gridGroup.position({ x: undoState.gridX, y: undoState.gridY });
+  }
+  undoState = null;
+  return true;
 }
 
 function setBaseInfoVisible(hasBase) {
@@ -1137,6 +1050,7 @@ function setMode(next) {
     gridAdjust:"グリッド調整（グリッドドラッグ＋十字キー）",
     settingBase:"基準点（交点スナップ）"
   }[mode] || mode;
+  if (modePinned) modePinned.textContent = `モード: ${label}`;
   setStatus("工程: " + label, null);
 }
 
@@ -1416,19 +1330,30 @@ function compensateUiScale() {
     const crossH = g.findOne(".crossH");
     const crossV = g.findOne(".crossV");
     const dotCore = g.findOne(".dotCore");
+    const pointLabel = g.findOne(".pointLabel");
+    const isActive = activePointKey && g.getAttr("pointKey") === activePointKey;
+    const activeColor = "#22d3ee";
+    const baseColor = g.getAttr("baseColor") || "#ffffff";
 
     if (hitCircle) hitCircle.radius(getDynamicHitRadius() * inv);
     if (crossH) {
       crossH.points([-CROSS_HALF * inv, 0, CROSS_HALF * inv, 0]);
+      crossH.stroke(isActive ? activeColor : baseColor);
       crossH.strokeWidth(Math.max(1, STROKE_THIN * inv));
     }
     if (crossV) {
       crossV.points([0, -CROSS_HALF * inv, 0, CROSS_HALF * inv]);
+      crossV.stroke(isActive ? activeColor : baseColor);
       crossV.strokeWidth(Math.max(1, STROKE_THIN * inv));
     }
     if (dotCore) {
-      dotCore.radius(Math.max(2.2, DOT_RADIUS * inv));
+      dotCore.radius(Math.max(2.2, DOT_RADIUS * inv * (isActive ? 1.35 : 1)));
+      dotCore.fill(isActive ? activeColor : baseColor);
       dotCore.strokeWidth(Math.max(0.8, 1 * inv));
+    }
+    if (pointLabel) {
+      pointLabel.fontSize(Math.max(9, 11 * inv));
+      pointLabel.fill(isActive ? "#67e8f9" : "rgba(255,255,255,0.96)");
     }
   });
 
@@ -1664,7 +1589,7 @@ function restoreAllPointInteractivity() {
 function setDpadVisible(on){
   const el = document.getElementById("dpad");
   el.style.display = on ? "block" : "none";
-  document.getElementById("dCenter").textContent = (dpadMode === "grid") ? `${nudgeMm}mm` : `${pointStepPx}px`;
+  document.getElementById("dCenter").textContent = dpadCenterLabel();
   updatePointUiVisibility();
 }
 
@@ -1685,7 +1610,7 @@ function enterPointAdjust(targetNode) {
     updateZoom(targetNode.position());
   }
 
-  document.getElementById("dCenter").textContent = `${pointStepPx}px`;
+  document.getElementById("dCenter").textContent = dpadCenterLabel();
 }
 
 function updateAssistStatus() {
@@ -1866,7 +1791,7 @@ function renderOverlay() {
 
   activePointNode = null;
 
-  function createUiDot(stagePos, color, className, pointKey) {
+  function createUiDot(stagePos, color, className, pointKey, pointNo = null) {
     const g = new Konva.Group({
       x: stagePos.x,
       y: stagePos.y,
@@ -1909,6 +1834,23 @@ function renderOverlay() {
       name: "dotCore"
     }));
 
+    g.setAttr("baseColor", color);
+
+    if (pointNo != null) {
+      g.add(new Konva.Text({
+        text: String(pointNo),
+        x: 10,
+        y: -20,
+        fontSize: 11,
+        fontStyle: "700",
+        fill: "rgba(255,255,255,0.96)",
+        stroke: "rgba(0,0,0,0.42)",
+        strokeWidth: 0.9,
+        listening: false,
+        name: "pointLabel"
+      }));
+    }
+
     g.on("tap", (e) => {
       e.cancelBubble = true;
       if (suppressNextTap) return;
@@ -1949,6 +1891,7 @@ function renderOverlay() {
     g.on("dragstart", (e) => {
       e.cancelBubble = true;
       pointDragging = true;
+      saveUndoState("point-drag");
       armTapSuppression();
       lastSnapInfo = "";
 
@@ -2009,20 +1952,37 @@ function renderOverlay() {
   }
 
   model.alignPoints.forEach((p, i) => {
-    createUiDot(photoLocalToStage(p), "#6f42c1", "alignDot", makePointKey("align", i));
+    createUiDot(photoLocalToStage(p), "#6f42c1", "alignDot", makePointKey("align", i), i + 1);
   });
 
   model.scalePoints.forEach((p, i) => {
-    createUiDot(photoLocalToStage(p), "red", "scaleDot", makePointKey("scale", i));
+    createUiDot(photoLocalToStage(p), "red", "scaleDot", makePointKey("scale", i), i + 1);
   });
 
   model.polyPoints.forEach((p, i) => {
-    createUiDot(photoLocalToStage(p), "#fd7e14", "polyDot", makePointKey("poly", i));
+    createUiDot(photoLocalToStage(p), "#fd7e14", "polyDot", makePointKey("poly", i), i + 1);
   });
 
   if (model.basePoint) {
-    createUiDot(photoLocalToStage(model.basePoint), "#00bfff", "baseDot", "base:0");
+    createUiDot(photoLocalToStage(model.basePoint), "#00bfff", "baseDot", "base:0", "B");
   }
+
+  const isPolyLocked = model.polyPoints.length >= 3 && mode !== "drawing" && mode !== "polyAdjust";
+  outsideShade.visible(isPolyLocked);
+  outsideShade.sceneFunc((ctx) => {
+    if (!isPolyLocked) return;
+    const points = getPolyStagePointsFlat();
+    if (!points || points.length < 6) return;
+    ctx.save();
+    ctx.fillStyle = "rgba(0,0,0,0.28)";
+    ctx.beginPath();
+    ctx.rect(0, 0, stage.width(), stage.height());
+    ctx.moveTo(points[0], points[1]);
+    for (let i = 2; i < points.length; i += 2) ctx.lineTo(points[i], points[i + 1]);
+    ctx.closePath();
+    ctx.fill("evenodd");
+    ctx.restore();
+  });
 
   const polyFlat = getPolyStagePointsFlat();
   polyShape.points(polyFlat);
@@ -2519,6 +2479,7 @@ function resnapBasePoint() {
 
 function moveGridByMm(dxMm, dyMm){
   if (!gridGroup.visible()) return;
+  saveUndoState("grid-move");
   const dx = mmToStagePxX(dxMm);
   const dy = mmToStagePxY(dyMm);
   gridGroup.position({ x: gridGroup.x() + dx, y: gridGroup.y() + dy });
@@ -2531,6 +2492,7 @@ function moveActivePointByScreenPx(dxPx, dyPx) {
 
   const modelPoint = getModelPointByKey(activePointKey);
   if (!modelPoint) return;
+  saveUndoState("point-nudge");
 
   const dx = dxPx / (stageScale || 1);
   const dy = dyPx / (stageScale || 1);
@@ -2628,11 +2590,11 @@ function bindDpad(){
     ev.preventDefault();
     ev.stopPropagation();
     if (dpadMode === "grid") {
-      nudgeMm = (nudgeMm === 5) ? 10 : 5;
+      const idx = STEP_CHOICES.indexOf(nudgeMm);
+      nudgeMm = STEP_CHOICES[(idx + 1) % STEP_CHOICES.length];
     } else {
-      if (pointStepPx === 0.5) pointStepPx = 1;
-      else if (pointStepPx === 1) pointStepPx = 2;
-      else pointStepPx = 0.5;
+      const idx = STEP_CHOICES.indexOf(pointStepPx);
+      pointStepPx = STEP_CHOICES[(idx + 1) % STEP_CHOICES.length];
     }
     setDpadVisible(true);
   }, { passive: false });
@@ -2876,6 +2838,7 @@ function setupImage(source) {
   suppressTapTimer = null;
   lastSnapInfo = "";
   clearDpadRepeat();
+  undoState = null;
 
   stage.draggable(false);
   hideZoomHud();
@@ -3029,7 +2992,14 @@ document.getElementById("polyBtn").onclick = () => {
 };
 
 document.getElementById("undoBtn").onclick = () => {
+  if (applyUndoState()) {
+    setStatus("1手戻し: 直前の編集状態に戻しました", null);
+    renderOverlay();
+    if (gridGroup.visible()) updateGrid();
+    return;
+  }
   if (model.polyPoints.length > 0) {
+    saveUndoState("poly-pop");
     model.polyPoints.pop();
     activePointKey = null;
     activePointNode = null;
@@ -3208,19 +3178,23 @@ document.getElementById("dangerMmVisibleInput").addEventListener("change", (e) =
 document.getElementById("dangerToggleInlineBtn").addEventListener("click", () => {
   document.getElementById("dangerToggleBtn").click();
 });
-document.getElementById("pointPrevBtn").addEventListener("click", () => {
+function bindClickOnce(elementId, key, handler) {
+  const element = document.getElementById(elementId);
+  if (!element) return;
+  const attr = `bindOnce${key}`;
+  if (element.dataset[attr] === "1") return;
+  element.dataset[attr] = "1";
+  element.addEventListener("click", handler);
+}
+
+bindClickOnce("pointPrevBtn", "PointPrev", () => {
   focusPolyPointByOffset(-1);
 });
-document.getElementById("pointNextBtn").addEventListener("click", () => {
+bindClickOnce("pointNextBtn", "PointNext", () => {
   focusPolyPointByOffset(1);
 });
 document.getElementById("tileWidthInput").addEventListener("change", () => { if (gridGroup.visible()) updateGrid(); updateBaseDimsToPoly(); });
 document.getElementById("tileHeightInput").addEventListener("change", () => { if (gridGroup.visible()) updateGrid(); updateBaseDimsToPoly(); });
-document.getElementById("tileWidthInput").addEventListener("input", scheduleTileInputUpdate);
-document.getElementById("tileHeightInput").addEventListener("input", scheduleTileInputUpdate);
-attachTapSelectAll("realDistInput");
-attachTapSelectAll("tileWidthInput");
-attachTapSelectAll("tileHeightInput");
 
 document.getElementById("basePointBtn").onclick = () => {
   if (!gridGroup.visible()) { alert("先にグリッドを生成してください。"); return; }
@@ -3275,6 +3249,7 @@ stage.on("pointerdown", (e) => {
       renderOverlay();
     }
   } else if (mode === "drawing") {
+    saveUndoState("poly-add");
     model.polyPoints.push(stageToPhotoLocal(pos));
     armTapSuppression();
     renderOverlay();
@@ -3288,6 +3263,7 @@ stage.on("pointerdown", (e) => {
       enterPointAdjust(nearest);
     }
   } else if (mode === "settingBase") {
+    saveUndoState("base-set");
     const snappedPos = snapToGrid(pos);
     model.basePoint = stageToPhotoLocal(snappedPos);
     armTapSuppression();
@@ -3310,13 +3286,16 @@ gridGroup.on("dragmove", () => {
   updateBaseDimsToPoly();
 });
 
+gridGroup.on("dragstart", () => {
+  saveUndoState("grid-drag");
+});
+
 document.getElementById("saveImageBtn").onclick = () => {
   const dpad = document.getElementById("dpad");
   const hud = document.getElementById("zoomHud");
   const topBar = document.getElementById("topBar");
   const bottomBar = document.getElementById("bottomBar");
   const menuSheet = document.getElementById("menuSheet");
-  const wasMenuOpen = menuSheet.style.display === "flex";
 
   topBar.style.display = "none";
   bottomBar.style.display = "none";
@@ -3325,25 +3304,13 @@ document.getElementById("saveImageBtn").onclick = () => {
   hud.style.display = "none";
 
   setTimeout(() => {
-    const exportOverlay = buildExportBaseDimsOverlay();
-    if (exportOverlay) {
-      uiLayer.add(exportOverlay);
-      uiLayer.draw();
-    }
-
     const link = document.createElement("a");
     link.download = "割付図.png";
     link.href = stage.toDataURL({ pixelRatio: 2 });
     link.click();
 
-    if (exportOverlay) {
-      exportOverlay.destroy();
-      uiLayer.draw();
-    }
-
     topBar.style.display = "flex";
     bottomBar.style.display = "flex";
-    menuSheet.style.display = wasMenuOpen ? "flex" : "none";
     if (!gridConfirmed && gridGroup.visible() && dpadMode === "grid") dpad.style.display = "block";
     if (zoomHudMode !== "hidden") hud.style.display = "flex";
   }, 120);
