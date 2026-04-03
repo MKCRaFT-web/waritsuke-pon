@@ -3042,10 +3042,19 @@ document.getElementById("dangerMmVisibleInput").addEventListener("change", (e) =
 document.getElementById("dangerToggleInlineBtn").addEventListener("click", () => {
   document.getElementById("dangerToggleBtn").click();
 });
-document.getElementById("pointPrevBtn").addEventListener("click", () => {
+function bindClickOnce(elementId, key, handler) {
+  const element = document.getElementById(elementId);
+  if (!element) return;
+  const attr = `bindOnce${key}`;
+  if (element.dataset[attr] === "1") return;
+  element.dataset[attr] = "1";
+  element.addEventListener("click", handler);
+}
+
+bindClickOnce("pointPrevBtn", "PointPrev", () => {
   focusPolyPointByOffset(-1);
 });
-document.getElementById("pointNextBtn").addEventListener("click", () => {
+bindClickOnce("pointNextBtn", "PointNext", () => {
   focusPolyPointByOffset(1);
 });
 document.getElementById("tileWidthInput").addEventListener("change", () => { if (gridGroup.visible()) updateGrid(); updateBaseDimsToPoly(); });
