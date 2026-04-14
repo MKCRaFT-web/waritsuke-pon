@@ -822,6 +822,26 @@ const zoomLayer = new Konva.Layer({ visible: false, listening: false });
 const photoGroup = new Konva.Group({ draggable: true });
 const bgImage = new Konva.Image({ listening: true });
 const gridGroup = new Konva.Group({ draggable: false, visible: false });
+const gridTransformer = new Konva.Transformer({
+  visible: false,
+  enabledAnchors: ["top-left", "top-right", "bottom-left", "bottom-right"],
+  rotateEnabled: false,
+  keepRatio: true,
+  flipEnabled: false,
+  ignoreStroke: true,
+  anchorStroke: "#22c55e",
+  anchorFill: "#ffffff",
+  anchorCornerRadius: 3,
+  anchorSize: 12,
+  borderStroke: "rgba(34,197,94,0.9)",
+  borderStrokeWidth: 1.2,
+  borderDash: [5, 4],
+  boundBoxFunc: (oldBox, newBox) => {
+    const minSize = 36;
+    if (Math.abs(newBox.width) < minSize || Math.abs(newBox.height) < minSize) return oldBox;
+    return newBox;
+  }
+});
 
 const polyShape = new Konva.Line({
   stroke: "#fd7e14",
@@ -864,6 +884,7 @@ zoomLayer.add(zoomGroup);
 
 photoGroup.add(bgImage);
 mainLayer.add(photoGroup, gridGroup);
+uiLayer.add(gridTransformer);
 uiLayer.add(outsideShade, polyShape, alignLine, scaleLine);
 stage.add(mainLayer, uiLayer, zoomLayer);
 
@@ -926,6 +947,7 @@ let baseInfoExpanded = false;
 let suppressSnapForNudge = false;
 let dpadActiveButton = null;
 let undoState = null;
+let gridPreviewScale = 1;
 
 const statusLeft = null;
 const statusRight = null;
@@ -968,7 +990,8 @@ function saveUndoState(reason = "") {
     basePoint: model.basePoint ? { ...model.basePoint } : null,
     activePointKey,
     gridX: gridGroup.x(),
-    gridY: gridGroup.y()
+    gridY: gridGroup.y(),
+    gridPreviewScale
   };
 }
 
@@ -979,8 +1002,15 @@ function applyUndoState() {
   model.polyPoints = undoState.polyPoints.map((p) => ({ ...p }));
   model.basePoint = undoState.basePoint ? { ...undoState.basePoint } : null;
   activePointKey = undoState.activePointKey || null;
+  if (isFinite(undoState.gridPreviewScale) && undoState.gridPreviewScale > 0) {
+    gridPreviewScale = undoState.gridPreviewScale;
+  }
   if (isFinite(undoState.gridX) && isFinite(undoState.gridY)) {
     gridGroup.position({ x: undoState.gridX, y: undoState.gridY });
+  }
+  if (!gridConfirmed && gridGroup.visible() && gridTransformer.visible()) {
+    gridTransformer.forceUpdate();
+    uiLayer.batchDraw();
   }
   undoState = null;
   return true;
@@ -1192,8 +1222,8 @@ function getCurrentSafeBEstimate() {
 
   const tileLocalW = twMm / mmPerLocalPx;
   const tileLocalH = thMm / mmPerLocalPx;
-  const tileStageW = tileLocalW * (photoGroup.scaleX() || 1);
-  const tileStageH = tileLocalH * (photoGroup.scaleY() || 1);
+  const tileStageW = tileLocalW * (photoGroup.scaleX() || 1) * gridPreviewScale;
+  const tileStageH = tileLocalH * (photoGroup.scaleY() || 1) * gridPreviewScale;
   if (!isFinite(tileStageW) || !isFinite(tileStageH) || tileStageW <= 0 || tileStageH <= 0) return null;
 
   const dangerMm = Math.max(0, parseFloat(document.getElementById("dangerMmInput").value || "0"));
@@ -2372,8 +2402,8 @@ function updateGrid() {
   const dangerMm = Math.max(0, parseFloat(document.getElementById("dangerMmInput").value || "0"));
   const tileLocalW = twMm / mmPerLocalPx;
   const tileLocalH = thMm / mmPerLocalPx;
-  const tileStageW = tileLocalW * (photoGroup.scaleX() || 1);
-  const tileStageH = tileLocalH * (photoGroup.scaleY() || 1);
+  const tileStageW = tileLocalW * (photoGroup.scaleX() || 1) * gridPreviewScale;
+  const tileStageH = tileLocalH * (photoGroup.scaleY() || 1) * gridPreviewScale;
   if (!isFinite(tileStageW) || !isFinite(tileStageH) || tileStageW <= 0 || tileStageH <= 0) return;
 
   lastTileStageW = tileStageW;
@@ -2468,6 +2498,30 @@ function updateGrid() {
   mainLayer.batchDraw();
   updateBaseDimsToPoly();
   updateEstimateFromCurrentState(safeB.fullCount, safeB.partialCount, safeB.reuseCandidateCount, safeB.reusePairCount, safeB.reuseAdjustedTileCount);
+}
+
+function setGridPreviewEditing(enabled) {
+  if (!enabled || !gridGroup.visible()) {
+    gridTransformer.nodes([]);
+    gridTransformer.visible(false);
+    gridGroup.draggable(false);
+    uiLayer.batchDraw();
+    return;
+  }
+  gridGroup.draggable(true);
+  gridTransformer.nodes([gridGroup]);
+  gridTransformer.visible(true);
+  gridTransformer.moveToTop();
+  gridTransformer.forceUpdate();
+  uiLayer.batchDraw();
+}
+
+function resetGridPreviewTransform({ recenter = true } = {}) {
+  gridPreviewScale = 1;
+  if (recenter) {
+    gridGroup.position({ x: stage.width() / 2, y: stage.height() / 2 });
+  }
+  if (gridGroup.visible()) updateGrid();
 }
 
 function resnapBasePoint() {
@@ -2855,6 +2909,8 @@ lockPhoto(false);
   gridGroup.visible(false);
   gridGroup.draggable(false);
   gridGroup.position({ x: 0, y: 0 });
+  gridPreviewScale = 1;
+  setGridPreviewEditing(false);
   gridGroup.destroyChildren();
 
   document.getElementById("alignInputArea").style.display = "none";
@@ -2979,6 +3035,8 @@ document.getElementById("polyBtn").onclick = () => {
   lockPhoto(true);
   gridGroup.visible(false);
   gridGroup.draggable(false);
+  gridPreviewScale = 1;
+  setGridPreviewEditing(false);
   document.getElementById("polyControls").style.display = "block";
   document.getElementById("polyEditDoneBtn").style.display = "none";
   document.getElementById("polyEditBtn").style.display = "block";
@@ -3074,12 +3132,9 @@ document.getElementById("showGridBtn").onclick = () => {
   setMode("gridAdjust");
   lockPhoto(true);
   gridGroup.visible(true);
-  gridGroup.draggable(true);
+  resetGridPreviewTransform({ recenter: true });
+  setGridPreviewEditing(true);
   dpadMode = "grid";
-  if (gridGroup.x() === 0 && gridGroup.y() === 0) {
-    gridGroup.position({ x: stage.width() / 2, y: stage.height() / 2 });
-  }
-  updateGrid();
   setDpadVisible(true);
   mainLayer.draw();
   updateUiChips();
@@ -3092,7 +3147,7 @@ document.getElementById("confirmGridBtn").onclick = () => {
   showZoomHud("grid");
   stage.draggable(true);
   setMode("idle");
-  gridGroup.draggable(false);
+  setGridPreviewEditing(false);
   lockPhoto(true);
   resnapBasePoint();
   updateEstimateFromCurrentState();
@@ -3149,7 +3204,7 @@ document.getElementById("gridReEditBtn").onclick = () => {
   stage.draggable(false);
   resetStageView();
   setMode("gridAdjust");
-  gridGroup.draggable(true);
+  setGridPreviewEditing(true);
   dpadMode = "grid";
   setDpadVisible(true);
   setStatus("グリッド再調整：ドラッグ＋十字キー", null);
@@ -3290,12 +3345,37 @@ gridGroup.on("dragstart", () => {
   saveUndoState("grid-drag");
 });
 
+gridGroup.on("transformstart", () => {
+  if (gridConfirmed) return;
+  saveUndoState("grid-scale");
+});
+
+gridGroup.on("transform", () => {
+  if (gridConfirmed) return;
+  const sx = gridGroup.scaleX() || 1;
+  const sy = gridGroup.scaleY() || 1;
+  const delta = Math.max(0.1, Math.min(8, (sx + sy) / 2));
+  const next = Math.max(0.1, Math.min(8, gridPreviewScale * delta));
+  gridPreviewScale = next;
+  gridGroup.scale({ x: 1, y: 1 });
+  updateGrid();
+  if (gridTransformer.visible()) gridTransformer.forceUpdate();
+});
+
+gridGroup.on("transformend", () => {
+  if (gridConfirmed) return;
+  resnapBasePoint();
+  updateBaseDimsToPoly();
+});
+
 document.getElementById("saveImageBtn").onclick = () => {
   const dpad = document.getElementById("dpad");
   const hud = document.getElementById("zoomHud");
   const topBar = document.getElementById("topBar");
   const bottomBar = document.getElementById("bottomBar");
   const menuSheet = document.getElementById("menuSheet");
+  const wasGridPreviewEditing = !gridConfirmed && gridGroup.visible() && mode === "gridAdjust";
+  if (wasGridPreviewEditing) setGridPreviewEditing(false);
 
   topBar.style.display = "none";
   bottomBar.style.display = "none";
@@ -3313,6 +3393,7 @@ document.getElementById("saveImageBtn").onclick = () => {
     bottomBar.style.display = "flex";
     if (!gridConfirmed && gridGroup.visible() && dpadMode === "grid") dpad.style.display = "block";
     if (zoomHudMode !== "hidden") hud.style.display = "flex";
+    if (wasGridPreviewEditing) setGridPreviewEditing(true);
   }, 120);
 };
 
