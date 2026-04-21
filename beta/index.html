@@ -1393,11 +1393,17 @@ function compensateUiScale() {
   uiLayer.batchDraw();
 }
 
+function redrawAllLayers() {
+  mainLayer.batchDraw();
+  uiLayer.batchDraw();
+  zoomLayer.batchDraw();
+}
+
 function applyStageView() {
   stage.scale({ x: stageScale, y: stageScale });
   stage.position(stagePos);
   compensateUiScale();
-  stage.batchDraw();
+  redrawAllLayers();
 }
 
 function resetStageView() {
