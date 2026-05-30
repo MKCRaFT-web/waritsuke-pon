@@ -228,7 +228,7 @@ const GA4_MEASUREMENT_ID = "G-EP58TWLTJY";
       const stage = window.Konva?.stages?.[0];
       if (!stage) return;
 
-      const visiblePx = isDrawingRange ? 16 : 24;
+      const visiblePx = isDrawingRange ? 12 : 24;
       const radius = visiblePx / (stage.scaleX() || 1);
       stage.find(".polyDot").forEach((dot) => {
         const hitCircle = dot.findOne(".hitCircle");
