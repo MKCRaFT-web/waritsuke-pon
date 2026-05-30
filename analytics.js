@@ -203,7 +203,7 @@ const GA4_MEASUREMENT_ID = "G-EP58TWLTJY";
         const step = activeStep();
         if (step === "align") text = "水平基準にしたい線の上で2点をタップし、確定してください。";
         if (step === "measure") text = "寸法線の両端を2点で指定し、実寸(mm)を入力して確定してください。";
-        if (step === "poly") text = "施工範囲の角を順番にタップします。間違えたら1手戻しを使えます。";
+        if (step === "poly") text = "施工範囲の角を順番にタップします。既存点を動かす時は『範囲調整』を使ってください。";
         if (step === "grid") {
           if (!hasScale()) text = "先に縮尺合わせを完了すると、グリッド生成へ進めます。";
           else if (!hasPoly()) text = "先に施工範囲を完了すると、グリッド生成へ進めます。";
@@ -232,16 +232,21 @@ const GA4_MEASUREMENT_ID = "G-EP58TWLTJY";
       const radius = visiblePx / (stage.scaleX() || 1);
       stage.find(".polyDot").forEach((dot) => {
         const hitCircle = dot.findOne(".hitCircle");
-        if (!hitCircle) return;
-        if (Math.abs(hitCircle.radius() - radius) > 0.2) {
+        if (hitCircle && Math.abs(hitCircle.radius() - radius) > 0.2) {
           hitCircle.radius(radius);
         }
+
+        dot.listening(!isDrawingRange);
+        dot.draggable(!isDrawingRange);
+        if (hitCircle) hitCircle.listening(!isDrawingRange);
       });
     };
 
     const scheduleHitTargetTune = () => {
       requestAnimationFrame(tuneRangePointHitTargets);
-      setTimeout(tuneRangePointHitTargets, 80);
+      setTimeout(tuneRangePointHitTargets, 0);
+      setTimeout(tuneRangePointHitTargets, 40);
+      setTimeout(tuneRangePointHitTargets, 100);
       setTimeout(tuneRangePointHitTargets, 220);
     };
 
@@ -267,7 +272,7 @@ const GA4_MEASUREMENT_ID = "G-EP58TWLTJY";
     window.addEventListener("pointerdown", scheduleHitTargetTune, { passive: true });
     window.addEventListener("pointerup", scheduleHitTargetTune, { passive: true });
     window.addEventListener("touchend", scheduleHitTargetTune, { passive: true });
-    setInterval(tuneRangePointHitTargets, 500);
+    setInterval(tuneRangePointHitTargets, 300);
     updateGuide();
     scheduleHitTargetTune();
   });
