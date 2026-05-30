@@ -194,7 +194,14 @@ const GA4_MEASUREMENT_ID = "G-EP58TWLTJY";
       if (message) button.title = disabled ? message : "";
     };
 
+    const normalizeModeLabel = () => {
+      const modePinned = get("modePinned");
+      if (!modePinned) return;
+      modePinned.textContent = modePinned.textContent.replace("点追加/ドラッグ", "点追加");
+    };
+
     const updateGuide = () => {
+      normalizeModeLabel();
       const startGuide = get("betaStartGuide");
       startGuide?.classList.toggle("hidden", !!hasLoadedFile());
 
@@ -220,6 +227,7 @@ const GA4_MEASUREMENT_ID = "G-EP58TWLTJY";
     };
 
     const tuneRangePointHitTargets = () => {
+      normalizeModeLabel();
       const modeText = get("modePinned")?.textContent || "";
       const isDrawingRange = modeText.includes("施工範囲指定");
       const isAdjustingRange = modeText.includes("範囲調整");
