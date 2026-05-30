@@ -219,16 +219,56 @@ const GA4_MEASUREMENT_ID = "G-EP58TWLTJY";
       setSoftDisabled(basePointBtn, !hasScale() || !hasPoly(), "先に縮尺合わせ、施工範囲指定、グリッド生成を完了してください。");
     };
 
+    const tuneRangePointHitTargets = () => {
+      const modeText = get("modePinned")?.textContent || "";
+      const isDrawingRange = modeText.includes("施工範囲指定");
+      const isAdjustingRange = modeText.includes("範囲調整");
+      if (!isDrawingRange && !isAdjustingRange) return;
+
+      const stage = window.Konva?.stages?.[0];
+      if (!stage) return;
+
+      const visiblePx = isDrawingRange ? 16 : 24;
+      const radius = visiblePx / (stage.scaleX() || 1);
+      stage.find(".polyDot").forEach((dot) => {
+        const hitCircle = dot.findOne(".hitCircle");
+        if (!hitCircle) return;
+        if (Math.abs(hitCircle.radius() - radius) > 0.2) {
+          hitCircle.radius(radius);
+        }
+      });
+    };
+
+    const scheduleHitTargetTune = () => {
+      requestAnimationFrame(tuneRangePointHitTargets);
+      setTimeout(tuneRangePointHitTargets, 80);
+      setTimeout(tuneRangePointHitTargets, 220);
+    };
+
     fileInput?.addEventListener("change", () => setTimeout(updateGuide, 250));
     document.querySelectorAll("#stepTabs .stepTab").forEach((button) => {
-      button.addEventListener("click", () => setTimeout(updateGuide, 0));
+      button.addEventListener("click", () => {
+        setTimeout(updateGuide, 0);
+        scheduleHitTargetTune();
+      });
     });
 
     [chipFile, chipScale, chipPoly, get("modePinned")].filter(Boolean).forEach((target) => {
-      new MutationObserver(updateGuide).observe(target, { childList: true, characterData: true, subtree: true });
+      new MutationObserver(() => {
+        updateGuide();
+        scheduleHitTargetTune();
+      }).observe(target, { childList: true, characterData: true, subtree: true });
     });
 
-    window.addEventListener("resize", updateGuide);
+    window.addEventListener("resize", () => {
+      updateGuide();
+      scheduleHitTargetTune();
+    });
+    window.addEventListener("pointerdown", scheduleHitTargetTune, { passive: true });
+    window.addEventListener("pointerup", scheduleHitTargetTune, { passive: true });
+    window.addEventListener("touchend", scheduleHitTargetTune, { passive: true });
+    setInterval(tuneRangePointHitTargets, 500);
     updateGuide();
+    scheduleHitTargetTune();
   });
 })();
