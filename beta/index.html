@@ -948,6 +948,8 @@ let suppressSnapForNudge = false;
 let dpadActiveButton = null;
 let undoState = null;
 let gridPreviewScale = 1;
+let rangeTouchGesture = null;
+let suppressRangeTouchTap = false;
 
 const statusLeft = null;
 const statusRight = null;
@@ -1570,6 +1572,98 @@ function zoomAroundCenter(factor) {
   };
   applyStageView();
 }
+
+function touchPoint(touch) {
+  const rect = stage.container().getBoundingClientRect();
+  return {
+    x: touch.clientX - rect.left,
+    y: touch.clientY - rect.top
+  };
+}
+
+function touchMidpoint(touches) {
+  const a = touchPoint(touches[0]);
+  const b = touchPoint(touches[1]);
+  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+}
+
+function touchDistance(touches) {
+  const a = touchPoint(touches[0]);
+  const b = touchPoint(touches[1]);
+  return Math.hypot(b.x - a.x, b.y - a.y);
+}
+
+function beginRangeTouchGesture(touches) {
+  const midpoint = touchMidpoint(touches);
+  const startScale = stageScale;
+
+  rangeTouchGesture = {
+    startScale,
+    startDistance: Math.max(1, touchDistance(touches)),
+    worldPoint: {
+      x: (midpoint.x - stagePos.x) / startScale,
+      y: (midpoint.y - stagePos.y) / startScale
+    }
+  };
+
+  suppressRangeTouchTap = true;
+  stage.stopDrag();
+  if (activePointNode && activePointNode.isDragging()) activePointNode.stopDrag();
+  pointDragging = false;
+  armTapSuppression(300);
+}
+
+function updateRangeTouchGesture(touches) {
+  if (!rangeTouchGesture || touches.length < 2) return;
+
+  const midpoint = touchMidpoint(touches);
+  const nextScale = Math.max(1, Math.min(
+    6,
+    rangeTouchGesture.startScale * touchDistance(touches) / rangeTouchGesture.startDistance
+  ));
+
+  stageScale = nextScale;
+  stagePos = {
+    x: midpoint.x - rangeTouchGesture.worldPoint.x * nextScale,
+    y: midpoint.y - rangeTouchGesture.worldPoint.y * nextScale
+  };
+  applyStageView();
+}
+
+const stageContent = stage.container();
+
+stageContent.addEventListener("touchstart", (e) => {
+  if (!isRangePointMode() || e.touches.length < 2) return;
+  e.preventDefault();
+  beginRangeTouchGesture(e.touches);
+}, { passive: false, capture: true });
+
+stageContent.addEventListener("touchmove", (e) => {
+  if (!isRangePointMode() || !rangeTouchGesture || e.touches.length < 2) return;
+  e.preventDefault();
+  updateRangeTouchGesture(e.touches);
+}, { passive: false, capture: true });
+
+function endRangeTouchGesture(e) {
+  if (!rangeTouchGesture) return;
+  e.preventDefault();
+
+  if (e.touches && e.touches.length >= 2) {
+    beginRangeTouchGesture(e.touches);
+    return;
+  }
+
+  rangeTouchGesture = null;
+  suppressRangeTouchTap = true;
+  armTapSuppression(300);
+
+  if (!e.touches || e.touches.length === 0) {
+    setTimeout(() => { suppressRangeTouchTap = false; }, 320);
+  }
+}
+
+stageContent.addEventListener("touchend", endRangeTouchGesture, { passive: false, capture: true });
+stageContent.addEventListener("touchcancel", endRangeTouchGesture, { passive: false, capture: true });
 
 function setOnlyActivePointInteractive(target) {
   const allDots = [
@@ -3279,9 +3373,10 @@ document.getElementById("basePointBtn").onclick = () => {
   }
 };
 
-stage.on("pointerdown", (e) => {
+function handleStagePointInput(e) {
   if (mode === "idle") return;
   if (pointDragging) return;
+  if (rangeTouchGesture || suppressRangeTouchTap) return;
   if (zoomHudMode === "point" && activePointKey) return;
 
   const layer = e.target && e.target.getLayer && e.target.getLayer();
@@ -3340,6 +3435,18 @@ stage.on("pointerdown", (e) => {
     resetStageView();
     showBaseMiniHud();
   }
+}
+
+stage.on("pointerdown", (e) => {
+  const eventType = e.evt && e.evt.type ? e.evt.type : "";
+  if (eventType.startsWith("touch")) return;
+  handleStagePointInput(e);
+});
+
+stage.on("tap", (e) => {
+  const eventType = e.evt && e.evt.type ? e.evt.type : "";
+  if (!eventType.startsWith("touch")) return;
+  handleStagePointInput(e);
 });
 
 gridGroup.on("dragmove", () => {
